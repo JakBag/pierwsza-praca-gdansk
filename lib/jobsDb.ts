@@ -1,0 +1,75 @@
+import { supabase } from "@/lib/supabaseClient";
+import { supabaseServer } from "@/lib/supabaseServer";
+
+export type DbJob = {
+  id: string;
+  title: string;
+  company: string;
+  city: string | null;
+  district: string | null;
+  tags: string[] | null;
+  location: string | null;
+  contract_type: string | null;
+  time_commitment: string | null;
+  work_mode: string | null;
+  pay: string | null;
+  description: string | null;
+  contact: string | null;
+  status: string | null;
+  expires_at: string | null;
+  published: boolean;
+  created_at: string;
+};
+
+async function purgeClosedJobsOlderThan10Days() {
+  const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { error } = await supabaseServer
+    .from("jobs")
+    .delete()
+    .eq("status", "closed")
+    .lt("expires_at", tenDaysAgo);
+
+  if (error) {
+    console.error("purgeClosedJobsOlderThan10Days error:", error.message);
+  }
+}
+
+export async function getPublishedJobs(): Promise<DbJob[]> {
+  await purgeClosedJobsOlderThan10Days();
+  const now = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from("jobs")
+    .select("*")
+    .eq("status", "active")
+    .or(`expires_at.is.null,expires_at.gt.${now}`)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("getPublishedJobs error:", error.message);
+    return [];
+  }
+
+  return (data ?? []) as DbJob[];
+}
+
+export async function getJobById(id: string): Promise<DbJob | null> {
+  await purgeClosedJobsOlderThan10Days();
+  const now = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from("jobs")
+    .select("*")
+    .eq("id", id)
+    .eq("status", "active")
+    .or(`expires_at.is.null,expires_at.gt.${now}`)
+    .single();
+
+  if (error) {
+    console.error("getJobById error:", error.message);
+    return null;
+  }
+
+  return data as DbJob;
+}

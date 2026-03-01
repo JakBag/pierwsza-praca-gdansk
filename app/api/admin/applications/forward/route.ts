@@ -1,0 +1,69 @@
+import { NextResponse } from "next/server";
+import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAdminRequest } from "@/lib/security";
+
+export async function POST(req: Request) {
+  const guard = await requireAdminRequest(req);
+  if (guard) {
+    return guard;
+  }
+
+  const body = await req.json().catch(() => ({}));
+  const applicationId = String(body.applicationId ?? "").trim();
+  const companyEmailUsed = String(body.companyEmailUsed ?? "").trim();
+
+  if (!applicationId) {
+    return NextResponse.json({ error: "Missing applicationId" }, { status: 400 });
+  }
+
+  const { data: app, error: appErr } = await supabaseServer
+    .from("applications")
+    .select("id,job_id")
+    .eq("id", applicationId)
+    .maybeSingle();
+
+  if (appErr) {
+    return NextResponse.json({ error: appErr.message }, { status: 500 });
+  }
+
+  if (!app) {
+    return NextResponse.json({ error: "Application not found" }, { status: 404 });
+  }
+
+  let nextStatus = "forwarded";
+
+  if (!app.job_id) {
+    nextStatus = "closed";
+  } else {
+    const { data: job, error: jobErr } = await supabaseServer
+      .from("jobs")
+      .select("status")
+      .eq("id", app.job_id)
+      .maybeSingle();
+
+    if (jobErr) {
+      return NextResponse.json({ error: jobErr.message }, { status: 500 });
+    }
+
+    if ((job?.status ?? "") !== "active") {
+      nextStatus = "closed";
+    }
+  }
+
+  const { error } = await supabaseServer
+    .from("applications")
+    .update({
+      status: nextStatus,
+      forwarded_at: new Date().toISOString(),
+      company_email_used: companyEmailUsed || null,
+    })
+    .eq("id", applicationId);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true, status: nextStatus });
+}
+
+
