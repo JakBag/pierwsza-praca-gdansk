@@ -1,5 +1,6 @@
-﻿import type { Metadata, Viewport } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import Footer from "@/components/Footer";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import "./globals.css";
@@ -60,7 +61,11 @@ export default function RootLayout({
   return (
     <html lang="pl">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-slate-50`}>
-        {measurementId ? <GoogleAnalytics measurementId={measurementId} /> : null}
+        {measurementId ? (
+          <Suspense fallback={null}>
+            <GoogleAnalytics measurementId={measurementId} />
+          </Suspense>
+        ) : null}
         <div className="flex-1">{children}</div>
         <Footer />
       </body>

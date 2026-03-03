@@ -128,6 +128,10 @@ export const adminSubmissionIdSchema = z.object({
   submissionId: idSchema,
 });
 
+export const adminSubmissionIdsSchema = z.object({
+  submissionIds: z.array(idSchema).min(1).max(200),
+});
+
 export const adminApproveSchema = z.object({
   submissionId: idSchema,
   pricePln: z.number().int().min(1).max(1000000).optional(),
@@ -147,6 +151,14 @@ export const adminRejectSchema = z.object({
 export const adminForwardSchema = z.object({
   applicationId: idSchema,
   companyEmailUsed: z.string().trim().max(160).optional().default(""),
+});
+
+export const adminApplicationIdSchema = z.object({
+  applicationId: idSchema,
+});
+
+export const adminApplicationIdsSchema = z.object({
+  applicationIds: z.array(idSchema).min(1).max(500),
 });
 
 export const adminJobIdSchema = z.object({

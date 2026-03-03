@@ -45,6 +45,7 @@ type AdminStats = {
   last_7_days: number;
   expired_jobs_count: number;
 };
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
 
 function normalizePublishedJobStatus(raw: unknown): "active" | "closed" | "expired" | null {
   const value = String(raw ?? "").trim();
@@ -67,6 +68,13 @@ function statusLabel(status: SubmissionStatus) {
   return "Odrzucone";
 }
 
+function formatTimeCommitment(value: string | null) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return "-";
+  if (raw === "pelny etat" || raw === "pelny etay") return "Pełny etat";
+  return value ?? "-";
+}
+
 function effectiveStatus(item: Submission): EffectiveStatus {
   const status = normalizeStatus(item);
   if (status !== "published") return status;
@@ -76,9 +84,9 @@ function effectiveStatus(item: Submission): EffectiveStatus {
 }
 
 export default function AdminSubmissions() {
-  const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [items, setItems] = useState<Submission[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [referenceNowMs, setReferenceNowMs] = useState<number>(0);
@@ -95,7 +103,7 @@ export default function AdminSubmissions() {
 
   async function handleUnauthorized(res: Response) {
     if (res.status === 401) {
-      window.location.href = "/admin/login";
+      window.location.assign("/admin/login");
       return true;
     }
     return false;
@@ -106,7 +114,7 @@ export default function AdminSubmissions() {
       method: "POST",
       headers: withAdminCsrfHeader(),
     });
-    window.location.href = "/admin/login";
+    window.location.assign("/admin/login");
   }
 
   async function postJson(path: string, payload?: unknown) {
@@ -182,10 +190,47 @@ export default function AdminSubmissions() {
     return items.filter(item => effectiveStatus(item) === statusFilter);
   }, [items, statusFilter]);
 
+  const visibleIds = useMemo(
+    () => filteredItems.map(item => item.id),
+    [filteredItems]
+  );
+
+  const selectedVisibleCount = useMemo(
+    () => visibleIds.filter(id => selectedIds.includes(id)).length,
+    [selectedIds, visibleIds]
+  );
+
+  const allVisibleSelected = visibleIds.length > 0 && selectedVisibleCount === visibleIds.length;
+
+  function toggleSelected(submissionId: string, checked: boolean) {
+    setSelectedIds(prev => {
+      if (checked) {
+        if (prev.includes(submissionId)) return prev;
+        return [...prev, submissionId];
+      }
+      return prev.filter(id => id !== submissionId);
+    });
+  }
+
+  function selectAllVisible() {
+    setSelectedIds(prev => {
+      const merged = new Set<string>(prev);
+      visibleIds.forEach(id => merged.add(id));
+      return Array.from(merged);
+    });
+  }
+
+  function clearAllSelected() {
+    setSelectedIds([]);
+  }
+
   async function load() {
     setLoading(true);
     const res = await fetch("/api/admin/submissions");
-    if (await handleUnauthorized(res)) return;
+    if (await handleUnauthorized(res)) {
+      setLoading(false);
+      return;
+    }
     const data = await res.json().catch(() => ({}));
     setLoading(false);
 
@@ -194,7 +239,10 @@ export default function AdminSubmissions() {
       return;
     }
 
-    setItems(data.data ?? []);
+    const nextItems = (data.data ?? []) as Submission[];
+    setItems(nextItems);
+    const nextIds = new Set(nextItems.map(item => item.id));
+    setSelectedIds(prev => prev.filter(id => nextIds.has(id)));
     const parsedNow = Date.parse(String(data.nowIso ?? ""));
     setReferenceNowMs(Number.isFinite(parsedNow) ? parsedNow : 0);
     setStats({
@@ -212,7 +260,10 @@ export default function AdminSubmissions() {
 
     setBusyId(submissionId);
     const res = await postJson("/api/admin/submissions/approve-unpaid", payload);
-    if (await handleUnauthorized(res)) return;
+    if (await handleUnauthorized(res)) {
+      setBusyId(null);
+      return;
+    }
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
     if (!res.ok) return alert(data.error ?? "Blad approve");
@@ -229,7 +280,10 @@ export default function AdminSubmissions() {
     };
     setBusyId(submissionId);
     const res = await postJson("/api/admin/submissions/mark-paid-and-publish", payload);
-    if (await handleUnauthorized(res)) return;
+    if (await handleUnauthorized(res)) {
+      setBusyId(null);
+      return;
+    }
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
     if (!res.ok) return alert(data.error ?? "Blad publikacji");
@@ -241,7 +295,10 @@ export default function AdminSubmissions() {
     if (!reason) return alert("Podaj uzasadnienie odrzucenia.");
     setBusyId(submissionId);
     const res = await postJson("/api/admin/reject", { submissionId, reason });
-    if (await handleUnauthorized(res)) return;
+    if (await handleUnauthorized(res)) {
+      setBusyId(null);
+      return;
+    }
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
     if (!res.ok) return alert(data.error ?? "Blad reject");
@@ -251,7 +308,10 @@ export default function AdminSubmissions() {
   async function closeJob(jobId: string, submissionId: string) {
     setBusyId(submissionId);
     const res = await postJson("/api/admin/jobs/close", { jobId });
-    if (await handleUnauthorized(res)) return;
+    if (await handleUnauthorized(res)) {
+      setBusyId(null);
+      return;
+    }
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
     if (!res.ok) return alert(data.error ?? "Blad zamykania oferty");
@@ -261,7 +321,10 @@ export default function AdminSubmissions() {
   async function restoreJob(jobId: string, submissionId: string) {
     setBusyId(submissionId);
     const res = await postJson("/api/admin/jobs/restore", { jobId });
-    if (await handleUnauthorized(res)) return;
+    if (await handleUnauthorized(res)) {
+      setBusyId(null);
+      return;
+    }
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
     if (!res.ok) return alert(data.error ?? "Blad przywracania oferty");
@@ -281,17 +344,33 @@ export default function AdminSubmissions() {
     if (!confirmed) return;
     setBusyId(submissionId);
     const res = await postJson("/api/admin/submissions/delete", { submissionId });
-    if (await handleUnauthorized(res)) return;
+    if (await handleUnauthorized(res)) {
+      setBusyId(null);
+      return;
+    }
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
     if (!res.ok) return alert(data.error ?? "Blad usuwania rekordu");
     await load();
   }
 
-  function toDateInput(iso: string) {
-    const parsed = Date.parse(String(iso ?? "").trim());
-    if (!Number.isFinite(parsed)) return "";
-    return new Date(parsed).toISOString().slice(0, 10);
+  async function deleteSelectedSubmissions() {
+    if (!selectedIds.length) return;
+    const confirmed = window.confirm(
+      `Usunac zaznaczone rekordy (${selectedIds.length})? Jesli oferty byly opublikowane, powiazane wpisy w jobs tez zostana usuniete.`
+    );
+    if (!confirmed) return;
+    setBusyId("bulk-delete");
+    const res = await postJson("/api/admin/submissions/delete", { submissionIds: selectedIds });
+    if (await handleUnauthorized(res)) {
+      setBusyId(null);
+      return;
+    }
+    const data = await res.json().catch(() => ({}));
+    setBusyId(null);
+    if (!res.ok) return alert(data.error ?? "Blad usuwania zaznaczonych rekordow");
+    setSelectedIds([]);
+    await load();
   }
 
   function formatDatePl(iso: string | null | undefined) {
@@ -335,7 +414,10 @@ export default function AdminSubmissions() {
       description,
       expiresAt: expiresAt ? `${expiresAt}T23:59:59.000Z` : null,
     });
-    if (await handleUnauthorized(res)) return;
+    if (await handleUnauthorized(res)) {
+      setBusyId(null);
+      return;
+    }
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
     if (!res.ok) return alert(data.error ?? "Blad zapisu zmian");
@@ -345,7 +427,10 @@ export default function AdminSubmissions() {
   async function extendPublishedJob(jobId: string, submissionId: string, days = 30) {
     setBusyId(submissionId);
     const res = await postJson("/api/admin/jobs/extend", { jobId, days });
-    if (await handleUnauthorized(res)) return;
+    if (await handleUnauthorized(res)) {
+      setBusyId(null);
+      return;
+    }
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
     if (!res.ok) return alert(data.error ?? "Blad przedluzenia");
@@ -400,12 +485,31 @@ export default function AdminSubmissions() {
             <option value="rejected_unpaid">Anulowane (brak platnosci)</option>
             <option value="rejected">Odrzucone</option>
           </select>
+          <button
+            className="border border-slate-300 hover:bg-slate-100 text-slate-800 px-4 py-2 rounded-xl disabled:opacity-50"
+            onClick={allVisibleSelected ? clearAllSelected : selectAllVisible}
+            disabled={visibleIds.length === 0}
+          >
+            {allVisibleSelected ? "Odznacz widoczne" : "Zaznacz widoczne"}
+          </button>
+          <button
+            className="bg-rose-700 hover:bg-rose-800 text-white px-4 py-2 rounded-xl disabled:opacity-50"
+            onClick={deleteSelectedSubmissions}
+            disabled={selectedIds.length === 0 || busyId === "bulk-delete"}
+          >
+            {busyId === "bulk-delete"
+              ? "Usuwanie..."
+              : `Usun zaznaczone (${selectedIds.length})`}
+          </button>
         </div>
         <p className="text-xs text-slate-500 mt-2">
           Pending: {summary.pending} | Czeka na platnosc: {summary.approved_unpaid} | Opublikowane: {summary.published} | Zamrozone: {summary.closed} | Wygasle: {summary.expired} | Anulowane: {summary.rejected_unpaid} | Odrzucone: {summary.rejected}
         </p>
         <p className="text-xs text-slate-500 mt-1">
           Nowe dzisiaj: {stats.new_today} | Ostatnie 7 dni: {stats.last_7_days} | Wygasle oferty: {stats.expired_jobs_count}
+        </p>
+        <p className="text-xs text-slate-500 mt-1">
+          Widoczne: {visibleIds.length} | Zaznaczone widoczne: {selectedVisibleCount}
         </p>
       </div>
 
@@ -429,7 +533,15 @@ export default function AdminSubmissions() {
             <div key={item.id} className="bg-white border border-slate-200 rounded-2xl p-5">
               <div className="flex justify-between gap-6 flex-wrap">
                 <div className="min-w-0">
-                  <div className="font-semibold text-slate-900">{item.company} / {item.title}</div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(item.id)}
+                      onChange={e => toggleSelected(item.id, e.target.checked)}
+                      aria-label={`Zaznacz ${item.company} ${item.title}`}
+                    />
+                    <div className="font-semibold text-slate-900">{item.company} / {item.title}</div>
+                  </div>
                   <div className="flex flex-wrap gap-2 mt-2">
                     <span className="text-xs bg-slate-900 text-white px-3 py-1 rounded-full">status: {displayStatus}</span>
                     <span className="text-xs bg-slate-200 text-slate-800 px-3 py-1 rounded-full">{statusLabel(status)}</span>
@@ -453,7 +565,7 @@ export default function AdminSubmissions() {
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Dane ogloszenia</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-slate-700 mt-2">
-                      <div>umowa: {item.contract_type ?? "-"}</div><div>wymiar: {item.time_commitment ?? "-"}</div><div>tryb: {item.work_mode ?? "-"}</div><div>stawka: {item.pay ?? "-"}</div>
+                      <div>umowa: {item.contract_type ?? "-"}</div><div>wymiar: {formatTimeCommitment(item.time_commitment)}</div><div>tryb: {item.work_mode ?? "-"}</div><div>stawka: {item.pay ?? "-"}</div>
                     </div>
                     <div className="text-sm text-slate-700 mt-4 whitespace-pre-line">{item.description}</div>
                     <div className="flex flex-wrap gap-2 mt-3">{(item.tags ?? []).map(tag => <span key={tag} className="bg-emerald-600 text-white text-xs px-3 py-1 rounded-full">{tag}</span>)}</div>

@@ -28,7 +28,9 @@ function fmtDate(iso: string) {
 
 export default function AdminApplications() {
   const [items, setItems] = useState<AppRow[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
   const [jobId, setJobId] = useState("");
   const [status, setStatus] = useState("");
 
@@ -40,7 +42,7 @@ export default function AdminApplications() {
 
   async function handleUnauthorized(res: Response) {
     if (res.status === 401) {
-      window.location.href = "/admin/login";
+      window.location.assign("/admin/login");
       return true;
     }
     return false;
@@ -53,7 +55,10 @@ export default function AdminApplications() {
     if (status) qs.set("status", status);
 
     const res = await fetch(`/api/admin/applications?${qs.toString()}`);
-    if (await handleUnauthorized(res)) return;
+    if (await handleUnauthorized(res)) {
+      setLoading(false);
+      return;
+    }
 
     const data = await res.json().catch(() => ({}));
     setLoading(false);
@@ -63,7 +68,30 @@ export default function AdminApplications() {
       return;
     }
 
-    setItems(data.data ?? []);
+    const nextItems = (data.data ?? []) as AppRow[];
+    setItems(nextItems);
+    const nextIds = new Set(nextItems.map(item => item.id));
+    setSelectedIds(prev => prev.filter(id => nextIds.has(id)));
+  }
+
+  function toggleSelected(applicationId: string, checked: boolean) {
+    setSelectedIds(prev => {
+      if (checked) {
+        if (prev.includes(applicationId)) return prev;
+        return [...prev, applicationId];
+      }
+      return prev.filter(id => id !== applicationId);
+    });
+  }
+
+  const allVisibleSelected = items.length > 0 && selectedIds.length === items.length;
+
+  function selectAllVisible() {
+    setSelectedIds(items.map(item => item.id));
+  }
+
+  function clearSelection() {
+    setSelectedIds([]);
   }
 
   async function markForwarded(app: AppRow) {
@@ -75,7 +103,9 @@ export default function AdminApplications() {
         companyEmailUsed: app.company_email_used ?? "",
       }),
     });
-    if (await handleUnauthorized(res)) return;
+    if (await handleUnauthorized(res)) {
+      return;
+    }
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -91,7 +121,36 @@ export default function AdminApplications() {
       method: "POST",
       headers: withAdminCsrfHeader(),
     });
-    window.location.href = "/admin/login";
+    window.location.assign("/admin/login");
+  }
+
+  async function deleteSelected() {
+    if (!selectedIds.length) return;
+    const confirmed = window.confirm(
+      `Usunac zaznaczone zgloszenia (${selectedIds.length})? Tej operacji nie da sie cofnac.`
+    );
+    if (!confirmed) return;
+
+    setIsDeletingBulk(true);
+    const res = await fetch("/api/admin/applications/delete", {
+      method: "POST",
+      headers: withAdminCsrfHeader({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ applicationIds: selectedIds }),
+    });
+    if (await handleUnauthorized(res)) {
+      setIsDeletingBulk(false);
+      return;
+    }
+
+    const data = await res.json().catch(() => ({}));
+    setIsDeletingBulk(false);
+    if (!res.ok) {
+      alert(`Blad (${res.status}): ${data.error ?? "unknown"}`);
+      return;
+    }
+
+    setSelectedIds([]);
+    await load();
   }
 
   return (
@@ -126,6 +185,22 @@ export default function AdminApplications() {
             {loading ? "Ladowanie..." : "Pobierz"}
           </button>
 
+          <button
+            className="border border-slate-300 hover:bg-slate-100 text-slate-800 px-4 py-2 rounded-xl disabled:opacity-50"
+            onClick={allVisibleSelected ? clearSelection : selectAllVisible}
+            disabled={!items.length}
+          >
+            {allVisibleSelected ? "Odznacz wszystkie" : "Zaznacz wszystkie"}
+          </button>
+
+          <button
+            className="bg-rose-700 hover:bg-rose-800 text-white px-4 py-2 rounded-xl disabled:opacity-50"
+            onClick={deleteSelected}
+            disabled={!selectedIds.length || isDeletingBulk}
+          >
+            {isDeletingBulk ? "Usuwanie..." : `Usun zaznaczone (${selectedIds.length})`}
+          </button>
+
           <button className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2 rounded-xl" onClick={logout}>
             Wyloguj
           </button>
@@ -138,14 +213,25 @@ export default function AdminApplications() {
         <div className="text-sm text-slate-600">
           Wyniki: <span className="font-semibold text-slate-900">{items.length}</span>
         </div>
+        <div className="text-xs text-slate-500 mt-1">
+          Zaznaczone: <span className="font-semibold text-slate-900">{selectedIds.length}</span>
+        </div>
 
         <div className="mt-4 space-y-4">
           {items.map(a => (
             <div key={a.id} className="border border-slate-200 rounded-2xl p-5">
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <div className="min-w-0">
-                  <div className="font-semibold text-slate-900">
-                    {a.job_title} {a.job_company ? `- ${a.job_company}` : ""}
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(a.id)}
+                      onChange={e => toggleSelected(a.id, e.target.checked)}
+                      aria-label={`Zaznacz zgloszenie ${a.id}`}
+                    />
+                    <div className="font-semibold text-slate-900">
+                      {a.job_title} {a.job_company ? `- ${a.job_company}` : ""}
+                    </div>
                   </div>
 
                   <div className="text-sm text-slate-600 mt-1">

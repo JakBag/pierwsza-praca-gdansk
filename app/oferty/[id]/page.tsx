@@ -6,6 +6,13 @@ import { getJobById } from "@/lib/jobsDb";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
+function formatTimeCommitment(value: string | null) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return "-";
+  if (raw === "pelny etat" || raw === "pelny etay") return "Pełny etat";
+  return value ?? "-";
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -133,7 +140,7 @@ export default async function OfferDetailsPage({
                   Umowa: {job.contract_type ?? "-"}
                 </span>
                 <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">
-                  Wymiar: {job.time_commitment ?? "-"}
+                  Wymiar: {formatTimeCommitment(job.time_commitment)}
                 </span>
                 <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">
                   Tryb: {job.work_mode ?? "-"}

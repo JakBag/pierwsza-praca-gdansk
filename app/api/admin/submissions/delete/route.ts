@@ -1,20 +1,9 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { requireAdminMutation } from "@/lib/security";
-import { adminSubmissionIdSchema, parseBody } from "@/lib/validation";
+import { adminSubmissionIdSchema, adminSubmissionIdsSchema, parseBody } from "@/lib/validation";
 
-export async function POST(req: Request) {
-  const guard = await requireAdminMutation(req);
-  if (guard) {
-    return guard;
-  }
-
-  const parsed = await parseBody(req, adminSubmissionIdSchema);
-  if (!parsed.ok) {
-    return NextResponse.json({ error: parsed.error }, { status: 400 });
-  }
-  const { submissionId } = parsed.data;
-
+async function deleteSubmissionById(submissionId: string) {
   const { data: sub, error: subErr } = await supabaseServer
     .from("job_submissions")
     .select("id,published_job_id")
@@ -22,21 +11,50 @@ export async function POST(req: Request) {
     .single();
 
   if (subErr || !sub) {
-    return NextResponse.json({ error: "Submission not found" }, { status: 404 });
+    return { ok: false as const, status: 404, error: "Submission not found" };
   }
 
   const linkedJobId = String(sub.published_job_id ?? "").trim();
   if (linkedJobId) {
     const { error: jobDeleteErr } = await supabaseServer.from("jobs").delete().eq("id", linkedJobId);
     if (jobDeleteErr) {
-      return NextResponse.json({ error: jobDeleteErr.message }, { status: 500 });
+      return { ok: false as const, status: 500, error: jobDeleteErr.message };
     }
   }
 
   const { error: deleteErr } = await supabaseServer.from("job_submissions").delete().eq("id", submissionId);
   if (deleteErr) {
-    return NextResponse.json({ error: deleteErr.message }, { status: 500 });
+    return { ok: false as const, status: 500, error: deleteErr.message };
   }
 
-  return NextResponse.json({ success: true });
+  return { ok: true as const };
+}
+
+export async function POST(req: Request) {
+  const guard = await requireAdminMutation(req);
+  if (guard) {
+    return guard;
+  }
+
+  const bulkParsed = await parseBody(req.clone(), adminSubmissionIdsSchema);
+  if (bulkParsed.ok) {
+    for (const submissionId of bulkParsed.data.submissionIds) {
+      const result = await deleteSubmissionById(submissionId);
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: result.status });
+      }
+    }
+    return NextResponse.json({ success: true, deleted: bulkParsed.data.submissionIds.length });
+  }
+
+  const singleParsed = await parseBody(req, adminSubmissionIdSchema);
+  if (!singleParsed.ok) {
+    return NextResponse.json({ error: singleParsed.error }, { status: 400 });
+  }
+  const result = await deleteSubmissionById(singleParsed.data.submissionId);
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  return NextResponse.json({ success: true, deleted: 1 });
 }

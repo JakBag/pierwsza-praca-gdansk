@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function ApplyForm({ jobId }: { jobId: string }) {
-  const startedAtMsRef = useRef<number>(Date.now());
+  const startedAtMsRef = useRef<number | null>(null);
   const [firstName, setFirstName] = useState("");
   const [contact, setContact] = useState("");
   const [message, setMessage] = useState("");
@@ -11,6 +11,10 @@ export default function ApplyForm({ jobId }: { jobId: string }) {
   const [rodo, setRodo] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    startedAtMsRef.current = Date.now();
+  }, []);
 
   function showToast(type: "success" | "error", text: string) {
     setToast({ type, text });
@@ -40,7 +44,7 @@ export default function ApplyForm({ jobId }: { jobId: string }) {
         contact,
         message,
         website,
-        startedAtMs: startedAtMsRef.current,
+        startedAtMs: startedAtMsRef.current ?? Date.now(),
         rodo,
       }),
     });
