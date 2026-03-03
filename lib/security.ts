@@ -6,6 +6,7 @@ import { logSecurityEvent } from "@/lib/monitoring";
 
 const DEFAULT_WINDOW_SEC = 10 * 60;
 const memoryRateLimitStore = new Map<string, number[]>();
+let rateLimitOps = 0;
 const ADMIN_SESSION_TTL_SEC = 8 * 60 * 60;
 const PRIMARY_ORIGIN = "https://pierwsza-praca-gdansk.pl";
 export const ADMIN_CSRF_COOKIE = "admin_csrf";
@@ -82,15 +83,41 @@ export function isAllowedBrowserOrigin(origin: string) {
   return getAllowedOrigins().has(origin);
 }
 
-export function requireAllowedBrowserOrigin(req: Request) {
+type OriginGuardOptions = {
+  requireHeader?: boolean;
+};
+
+export function requireAllowedBrowserOrigin(req: Request, options: OriginGuardOptions = {}) {
   const origin = req.headers.get("origin");
-  if (!origin) return null;
+  if (!origin) {
+    if (!options.requireHeader) return null;
+    const route = new URL(req.url).pathname;
+    const ip = getClientIp(req);
+    logSecurityEvent({ status: 403, route, ip, tag: "origin_missing" });
+    return NextResponse.json({ error: "Missing Origin header" }, { status: 403 });
+  }
   if (isAllowedBrowserOrigin(origin)) return null;
 
   const route = new URL(req.url).pathname;
   const ip = getClientIp(req);
   logSecurityEvent({ status: 403, route, ip, tag: "origin_not_allowed" });
   return NextResponse.json({ error: "Origin not allowed" }, { status: 403 });
+}
+
+function pruneRateLimitStore(nowMs: number) {
+  const maxWindowMs = DEFAULT_WINDOW_SEC * 1000;
+  for (const [key, values] of memoryRateLimitStore) {
+    if (!values.length) {
+      memoryRateLimitStore.delete(key);
+      continue;
+    }
+    const recent = values.filter(ts => nowMs - ts < maxWindowMs);
+    if (!recent.length) {
+      memoryRateLimitStore.delete(key);
+    } else if (recent.length !== values.length) {
+      memoryRateLimitStore.set(key, recent);
+    }
+  }
 }
 
 function hashRateLimitKey(raw: string) {
@@ -120,6 +147,10 @@ export async function checkRateLimit(params: RateLimitParams) {
     recent.push(nowMs);
   }
   memoryRateLimitStore.set(key, recent);
+  rateLimitOps += 1;
+  if (rateLimitOps % 200 === 0) {
+    pruneRateLimitStore(nowMs);
+  }
 
   const count = recent.length;
   const oldest = recent[0] ?? nowMs;
@@ -214,13 +245,28 @@ export function requireAdminCsrf(req: Request) {
 }
 
 export async function requireAdminMutation(req: Request) {
-  const originGuard = requireAllowedBrowserOrigin(req);
+  const originGuard = requireAllowedBrowserOrigin(req, { requireHeader: true });
   if (originGuard) return originGuard;
 
   const authGuard = await requireAdminRequest(req);
   if (authGuard) return authGuard;
 
   return requireAdminCsrf(req);
+}
+
+export function requireSubmissionTiming(req: Request, startedAtMs: number, minMs = 1200, maxMs = 2 * 60 * 60 * 1000) {
+  if (!Number.isFinite(startedAtMs)) {
+    return NextResponse.json({ error: "Invalid form timing" }, { status: 400 });
+  }
+  const now = Date.now();
+  const elapsedMs = now - Math.floor(startedAtMs);
+  if (elapsedMs < minMs || elapsedMs > maxMs) {
+    const route = new URL(req.url).pathname;
+    const ip = getClientIp(req);
+    logSecurityEvent({ status: 403, route, ip, tag: "invalid_submission_timing" });
+    return NextResponse.json({ error: "Form validation failed" }, { status: 403 });
+  }
+  return null;
 }
 
 export function internalError(label: string, error: unknown) {

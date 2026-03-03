@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const inputClassName =
   "mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400";
@@ -220,6 +220,7 @@ export default function CompanyJobForm() {
   const [forms, setForms] = useState<JobDraft[]>(
     Array.from({ length: PACKAGES[0].size }, () => ({ ...EMPTY_DRAFT }))
   );
+  const startedAtMsRef = useRef<number>(Date.now());
 
   function updateForm(index: number, next: JobDraft) {
     setForms(prev => prev.map((draft, i) => (i === index ? next : draft)));
@@ -237,6 +238,7 @@ export default function CompanyJobForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        startedAtMs: startedAtMsRef.current,
         packageCode: pkg.code,
         packageSize: pkg.size,
         jobs: jobsPayload,
@@ -251,6 +253,7 @@ export default function CompanyJobForm() {
 
     alert("Wysłane do weryfikacji.");
     setForms(Array.from({ length: pkg.size }, () => ({ ...EMPTY_DRAFT })));
+    startedAtMsRef.current = Date.now();
   }
 
   return (
@@ -268,6 +271,7 @@ export default function CompanyJobForm() {
             if (next) {
               setPkg(next);
               setForms(Array.from({ length: next.size }, () => ({ ...EMPTY_DRAFT })));
+              startedAtMsRef.current = Date.now();
             }
           }}
         >

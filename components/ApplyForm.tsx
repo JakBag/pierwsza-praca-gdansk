@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function ApplyForm({ jobId }: { jobId: string }) {
+  const startedAtMsRef = useRef<number>(Date.now());
   const [firstName, setFirstName] = useState("");
   const [contact, setContact] = useState("");
   const [message, setMessage] = useState("");
@@ -39,6 +40,7 @@ export default function ApplyForm({ jobId }: { jobId: string }) {
         contact,
         message,
         website,
+        startedAtMs: startedAtMsRef.current,
         rodo,
       }),
     });
@@ -66,6 +68,7 @@ export default function ApplyForm({ jobId }: { jobId: string }) {
     setMessage("");
     setWebsite("");
     setRodo(false);
+    startedAtMsRef.current = Date.now();
   }
 
   return (
@@ -129,4 +132,3 @@ export default function ApplyForm({ jobId }: { jobId: string }) {
     </div>
   );
 }
-

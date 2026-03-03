@@ -216,6 +216,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
   const [err, setErr] = useState<string | null>(null);
   const [customTagInputByIndex, setCustomTagInputByIndex] = useState<Record<number, string>>({});
   const [showCustomTagInputByIndex, setShowCustomTagInputByIndex] = useState<Record<number, boolean>>({});
+  const startedAtMsRef = useRef<number>(Date.now());
   const descriptionRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const lastSelectionByIndex = useRef<Record<number, Range | null>>({});
   const editorInitializedByIndex = useRef<Record<number, boolean>>({});
@@ -530,6 +531,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          startedAtMs: startedAtMsRef.current,
           packageCode: pkgCode,
           packageSize: size,
           website,
@@ -543,6 +545,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
       setOk("Wysłane. Po zatwierdzeniu zgłoszenia przekażemy dane do płatności na maila");
       setForms(Array.from({ length: size }, () => ({ ...EMPTY })));
       setWebsite("");
+      startedAtMsRef.current = Date.now();
       setCustomTagInputByIndex({});
       setShowCustomTagInputByIndex({});
       editorInitializedByIndex.current = {};

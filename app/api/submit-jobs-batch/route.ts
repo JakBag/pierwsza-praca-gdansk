@@ -1,7 +1,12 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { internalError, requireAllowedBrowserOrigin, requireRateLimit } from "@/lib/security";
+import {
+  internalError,
+  requireAllowedBrowserOrigin,
+  requireRateLimit,
+  requireSubmissionTiming,
+} from "@/lib/security";
 import { parseBody, submitJobsBatchSchema } from "@/lib/validation";
 
 type JobPayload = {
@@ -37,7 +42,7 @@ function normalizeNip(value: unknown) {
 }
 
 export async function POST(req: Request) {
-  const originGuard = requireAllowedBrowserOrigin(req);
+  const originGuard = requireAllowedBrowserOrigin(req, { requireHeader: true });
   if (originGuard) return originGuard;
 
   const parsed = await parseBody(req, submitJobsBatchSchema);
@@ -47,14 +52,24 @@ export async function POST(req: Request) {
 
   const {
     website,
+    startedAtMs,
     packageCode,
     packageSize,
     jobs,
-  } = parsed.data as { website: string; packageCode: string; packageSize: number; jobs: JobPayload[] };
+  } = parsed.data as {
+    website: string;
+    startedAtMs: number;
+    packageCode: string;
+    packageSize: number;
+    jobs: JobPayload[];
+  };
 
   if (website) {
     return NextResponse.json({ success: true, ignored: true });
   }
+
+  const timingGuard = requireSubmissionTiming(req, startedAtMs, 1500);
+  if (timingGuard) return timingGuard;
 
   const rateLimit = await requireRateLimit(req, "submit-jobs-batch", 6, 10 * 60, jobs.length);
   if (rateLimit) {

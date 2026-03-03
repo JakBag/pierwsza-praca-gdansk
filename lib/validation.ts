@@ -56,6 +56,7 @@ export const applySchema = z.object({
   contact: plainText("contact", 160),
   message: plainText("message", 2000),
   website: z.string().trim().max(120).optional().default(""),
+  startedAtMs: z.number().int().positive(),
   rodo: z.boolean(),
 });
 
@@ -108,6 +109,7 @@ const submitBatchJobSchema = z.object({
 export const submitJobsBatchSchema = z
   .object({
     website: z.string().trim().max(120).optional().default(""),
+    startedAtMs: z.number().int().positive(),
     packageCode: plainText("packageCode", 20),
     packageSize: z.number().int().min(1).max(10),
     jobs: z.array(submitBatchJobSchema).min(1).max(10),

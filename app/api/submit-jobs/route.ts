@@ -9,7 +9,7 @@ import {
 import { parseBody, submitJobsSchema } from "@/lib/validation";
 
 export async function POST(req: Request) {
-  const originGuard = requireAllowedBrowserOrigin(req);
+  const originGuard = requireAllowedBrowserOrigin(req, { requireHeader: true });
   if (originGuard) return originGuard;
 
   const unauthorized = requireHeaderSecret(req, "x-submit-key", "SUBMIT_JOBS_KEY");

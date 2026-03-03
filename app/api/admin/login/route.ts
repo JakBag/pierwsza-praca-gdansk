@@ -7,11 +7,13 @@ import {
 import {
   ADMIN_CSRF_COOKIE,
   createAdminCsrfToken,
+  getClientIp,
   getAdminCsrfCookieOptions,
   requireAllowedBrowserOrigin,
   requireRateLimit,
 } from "@/lib/security";
 import { adminLoginSchema, parseBody } from "@/lib/validation";
+import { logSecurityEvent } from "@/lib/monitoring";
 
 function safeEqual(a: string, b: string) {
   if (a.length !== b.length) return false;
@@ -21,7 +23,7 @@ function safeEqual(a: string, b: string) {
 }
 
 export async function POST(req: Request) {
-  const originGuard = requireAllowedBrowserOrigin(req);
+  const originGuard = requireAllowedBrowserOrigin(req, { requireHeader: true });
   if (originGuard) return originGuard;
 
   const limited = await requireRateLimit(req, "admin-login", 5, 10 * 60);
@@ -43,6 +45,13 @@ export async function POST(req: Request) {
   }
 
   if (!safeEqual(username, expectedUser) || !safeEqual(password, expectedPass)) {
+    logSecurityEvent({
+      status: 401,
+      route: new URL(req.url).pathname,
+      ip: getClientIp(req),
+      tag: "admin_auth_fail",
+    });
+    await new Promise(resolve => setTimeout(resolve, 500));
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
