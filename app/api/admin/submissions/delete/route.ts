@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { requireAdminRequest } from "@/lib/security";
+import { requireAdminMutation } from "@/lib/security";
+import { adminSubmissionIdSchema, parseBody } from "@/lib/validation";
 
 export async function POST(req: Request) {
-  const guard = await requireAdminRequest(req);
+  const guard = await requireAdminMutation(req);
   if (guard) {
     return guard;
   }
 
-  const body = await req.json().catch(() => ({}));
-  const submissionId = String(body.submissionId ?? "").trim();
-
-  if (!submissionId) {
-    return NextResponse.json({ error: "Missing submissionId" }, { status: 400 });
+  const parsed = await parseBody(req, adminSubmissionIdSchema);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
+  const { submissionId } = parsed.data;
 
   const { data: sub, error: subErr } = await supabaseServer
     .from("job_submissions")
@@ -40,5 +40,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ success: true });
 }
-
-

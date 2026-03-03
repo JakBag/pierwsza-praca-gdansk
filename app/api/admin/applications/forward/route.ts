@@ -1,20 +1,19 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { requireAdminRequest } from "@/lib/security";
+import { requireAdminMutation } from "@/lib/security";
+import { adminForwardSchema, parseBody } from "@/lib/validation";
 
 export async function POST(req: Request) {
-  const guard = await requireAdminRequest(req);
+  const guard = await requireAdminMutation(req);
   if (guard) {
     return guard;
   }
 
-  const body = await req.json().catch(() => ({}));
-  const applicationId = String(body.applicationId ?? "").trim();
-  const companyEmailUsed = String(body.companyEmailUsed ?? "").trim();
-
-  if (!applicationId) {
-    return NextResponse.json({ error: "Missing applicationId" }, { status: 400 });
+  const parsed = await parseBody(req, adminForwardSchema);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
+  const { applicationId, companyEmailUsed } = parsed.data;
 
   const { data: app, error: appErr } = await supabaseServer
     .from("applications")
@@ -65,5 +64,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ ok: true, status: nextStatus });
 }
-
-

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { withAdminCsrfHeader } from "@/lib/clientSecurity";
 
 type AppRow = {
   id: string;
@@ -68,7 +69,7 @@ export default function AdminApplications() {
   async function markForwarded(app: AppRow) {
     const res = await fetch("/api/admin/applications/forward", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: withAdminCsrfHeader({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         applicationId: app.id,
         companyEmailUsed: app.company_email_used ?? "",
@@ -86,7 +87,10 @@ export default function AdminApplications() {
   }
 
   async function logout() {
-    await fetch("/api/admin/logout", { method: "POST" });
+    await fetch("/api/admin/logout", {
+      method: "POST",
+      headers: withAdminCsrfHeader(),
+    });
     window.location.href = "/admin/login";
   }
 

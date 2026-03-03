@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { requireAdminRequest } from "@/lib/security";
+import { requireAdminMutation } from "@/lib/security";
+import { adminJobUpdateSchema, parseBody } from "@/lib/validation";
 
 function normalizeExpiresAt(raw: unknown) {
   const value = String(raw ?? "").trim();
@@ -13,31 +14,24 @@ function normalizeExpiresAt(raw: unknown) {
 }
 
 export async function POST(req: Request) {
-  const guard = await requireAdminRequest(req);
+  const guard = await requireAdminMutation(req);
   if (guard) {
     return guard;
   }
 
-  const body = await req.json().catch(() => ({}));
-  const jobId = String(body.jobId ?? "").trim();
-  const pay = String(body.pay ?? "").trim();
-  const description = String(body.description ?? "").trim();
-  const expiresAt = normalizeExpiresAt(body.expiresAt);
-
-  if (!jobId) {
-    return NextResponse.json({ error: "Missing jobId" }, { status: 400 });
+  const parsed = await parseBody(req, adminJobUpdateSchema);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
-
-  if (!pay || !description) {
-    return NextResponse.json({ error: "Missing pay or description" }, { status: 400 });
-  }
+  const { jobId, pay, description, expiresAt } = parsed.data;
+  const normalizedExpiresAt = normalizeExpiresAt(expiresAt);
 
   const { error } = await supabaseServer
     .from("jobs")
     .update({
       pay,
       description,
-      expires_at: expiresAt,
+      expires_at: normalizedExpiresAt,
     })
     .eq("id", jobId);
 
@@ -50,11 +44,9 @@ export async function POST(req: Request) {
     .update({
       pay,
       description,
-      expires_at: expiresAt,
+      expires_at: normalizedExpiresAt,
     })
     .eq("published_job_id", jobId);
 
   return NextResponse.json({ success: true });
 }
-
-

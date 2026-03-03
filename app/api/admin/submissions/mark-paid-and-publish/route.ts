@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { requireAdminRequest } from "@/lib/security";
+import { requireAdminMutation } from "@/lib/security";
+import { adminMarkPaidSchema, parseBody } from "@/lib/validation";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -14,19 +15,16 @@ function addDaysIso(days: number) {
 }
 
 export async function POST(req: Request) {
-  const guard = await requireAdminRequest(req);
+  const guard = await requireAdminMutation(req);
   if (guard) {
     return guard;
   }
 
-  const body = await req.json().catch(() => ({}));
-  const submissionId = String(body.submissionId ?? "").trim();
-  const invoiceRef = String(body.invoiceRef ?? "").trim();
-  const durationDays = Number(body.durationDays ?? 30);
-
-  if (!submissionId) {
-    return NextResponse.json({ error: "Missing submissionId" }, { status: 400 });
+  const parsed = await parseBody(req, adminMarkPaidSchema);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
+  const { submissionId, invoiceRef, durationDays } = parsed.data;
 
   const { data: sub, error: subErr } = await supabaseServer
     .from("job_submissions")
@@ -137,5 +135,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ success: true, jobId: jobRow.id, mailed: true });
 }
-
-

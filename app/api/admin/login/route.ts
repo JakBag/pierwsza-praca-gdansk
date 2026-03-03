@@ -4,7 +4,14 @@ import {
   createAdminSessionToken,
   getAdminSessionCookieOptions,
 } from "@/lib/adminSession";
-import { requireRateLimit } from "@/lib/security";
+import {
+  ADMIN_CSRF_COOKIE,
+  createAdminCsrfToken,
+  getAdminCsrfCookieOptions,
+  requireAllowedBrowserOrigin,
+  requireRateLimit,
+} from "@/lib/security";
+import { adminLoginSchema, parseBody } from "@/lib/validation";
 
 function safeEqual(a: string, b: string) {
   if (a.length !== b.length) return false;
@@ -14,12 +21,18 @@ function safeEqual(a: string, b: string) {
 }
 
 export async function POST(req: Request) {
+  const originGuard = requireAllowedBrowserOrigin(req);
+  if (originGuard) return originGuard;
+
   const limited = await requireRateLimit(req, "admin-login", 5, 10 * 60);
   if (limited) return limited;
 
-  const body = await req.json().catch(() => ({}));
-  const username = String(body.username ?? "").trim();
-  const password = String(body.password ?? "");
+  const parsed = await parseBody(req, adminLoginSchema);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+  const username = parsed.data.username;
+  const password = parsed.data.password;
 
   const expectedUser = process.env.ADMIN_LOGIN_USER ?? "";
   const expectedPass = process.env.ADMIN_LOGIN_PASS ?? "";
@@ -40,5 +53,6 @@ export async function POST(req: Request) {
 
   const res = NextResponse.json({ ok: true });
   res.cookies.set(ADMIN_SESSION_COOKIE, token, getAdminSessionCookieOptions());
+  res.cookies.set(ADMIN_CSRF_COOKIE, createAdminCsrfToken(), getAdminCsrfCookieOptions());
   return res;
 }

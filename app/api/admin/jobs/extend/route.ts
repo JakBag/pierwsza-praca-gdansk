@@ -1,21 +1,20 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { requireAdminRequest } from "@/lib/security";
+import { requireAdminMutation } from "@/lib/security";
+import { adminJobExtendSchema, parseBody } from "@/lib/validation";
 
 export async function POST(req: Request) {
-  const guard = await requireAdminRequest(req);
+  const guard = await requireAdminMutation(req);
   if (guard) {
     return guard;
   }
 
-  const body = await req.json().catch(() => ({}));
-  const jobId = String(body.jobId ?? "").trim();
-  const days = Number(body.days ?? 30);
-  const extensionDays = Number.isFinite(days) && days > 0 ? Math.floor(days) : 30;
-
-  if (!jobId) {
-    return NextResponse.json({ error: "Missing jobId" }, { status: 400 });
+  const parsed = await parseBody(req, adminJobExtendSchema);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
+  const { jobId, days } = parsed.data;
+  const extensionDays = Number.isFinite(days) && days > 0 ? Math.floor(days) : 30;
 
   const { data: job, error: jobErr } = await supabaseServer
     .from("jobs")
@@ -51,5 +50,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ success: true, expires_at: nextExpiresAt });
 }
-
-

@@ -2,7 +2,8 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { getClientIp, internalError } from "@/lib/security";
+import { getClientIp, internalError, requireAllowedBrowserOrigin } from "@/lib/security";
+import { applySchema, parseBody } from "@/lib/validation";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -30,22 +31,20 @@ function normalizeContact(raw: string) {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => ({}));
+    const originGuard = requireAllowedBrowserOrigin(req);
+    if (originGuard) return originGuard;
 
-    const jobId = String(body.jobId ?? "").trim();
-    const firstName = String(body.firstName ?? "").trim();
-    const contact = String(body.contact ?? "").trim();
-    const message = String(body.message ?? "").trim();
-    const website = String(body.website ?? "").trim();
-    const rodo = Boolean(body.rodo);
+    const parsed = await parseBody(req, applySchema);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const { jobId, firstName, contact, message, website, rodo } = parsed.data;
 
     if (website) {
       return NextResponse.json({ success: true, ignored: true });
     }
 
-    if (!jobId || !firstName || !contact || !message) {
-      return NextResponse.json({ error: "Brak danych" }, { status: 400 });
-    }
     if (!rodo) {
       return NextResponse.json({ error: "Brak zgody RODO" }, { status: 400 });
     }

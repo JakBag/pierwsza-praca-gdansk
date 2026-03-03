@@ -1,5 +1,5 @@
 type SecurityEvent = {
-  status: 401 | 429 | 500;
+  status: 401 | 403 | 429 | 500;
   route: string;
   ip: string;
   tag: string;

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { withAdminCsrfHeader } from "@/lib/clientSecurity";
 
 type SubmissionStatus = "pending" | "approved_unpaid" | "published" | "rejected" | "rejected_unpaid";
 type StatusFilter = "all" | SubmissionStatus | "closed" | "expired";
@@ -101,8 +102,23 @@ export default function AdminSubmissions() {
   }
 
   async function logout() {
-    await fetch("/api/admin/logout", { method: "POST" });
+    await fetch("/api/admin/logout", {
+      method: "POST",
+      headers: withAdminCsrfHeader(),
+    });
     window.location.href = "/admin/login";
+  }
+
+  async function postJson(path: string, payload?: unknown) {
+    const headers = payload === undefined
+      ? withAdminCsrfHeader()
+      : withAdminCsrfHeader({ "Content-Type": "application/json" });
+
+    return fetch(path, {
+      method: "POST",
+      headers,
+      body: payload === undefined ? undefined : JSON.stringify(payload),
+    });
   }
 
   useEffect(() => {
@@ -195,11 +211,7 @@ export default function AdminSubmissions() {
     if (rawPrice && Number.isFinite(parsedPrice) && parsedPrice > 0) payload.pricePln = Math.floor(parsedPrice);
 
     setBusyId(submissionId);
-    const res = await fetch("/api/admin/submissions/approve-unpaid", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const res = await postJson("/api/admin/submissions/approve-unpaid", payload);
     if (await handleUnauthorized(res)) return;
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
@@ -216,11 +228,7 @@ export default function AdminSubmissions() {
       durationDays: Number.isFinite(parsedDuration) && parsedDuration > 0 ? Math.floor(parsedDuration) : 30,
     };
     setBusyId(submissionId);
-    const res = await fetch("/api/admin/submissions/mark-paid-and-publish", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const res = await postJson("/api/admin/submissions/mark-paid-and-publish", payload);
     if (await handleUnauthorized(res)) return;
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
@@ -232,11 +240,7 @@ export default function AdminSubmissions() {
     const reason = String(rejectReasonById[submissionId] ?? "").trim();
     if (!reason) return alert("Podaj uzasadnienie odrzucenia.");
     setBusyId(submissionId);
-    const res = await fetch("/api/admin/reject", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ submissionId, reason }),
-    });
+    const res = await postJson("/api/admin/reject", { submissionId, reason });
     if (await handleUnauthorized(res)) return;
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
@@ -246,11 +250,7 @@ export default function AdminSubmissions() {
 
   async function closeJob(jobId: string, submissionId: string) {
     setBusyId(submissionId);
-    const res = await fetch("/api/admin/jobs/close", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobId }),
-    });
+    const res = await postJson("/api/admin/jobs/close", { jobId });
     if (await handleUnauthorized(res)) return;
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
@@ -260,11 +260,7 @@ export default function AdminSubmissions() {
 
   async function restoreJob(jobId: string, submissionId: string) {
     setBusyId(submissionId);
-    const res = await fetch("/api/admin/jobs/restore", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobId }),
-    });
+    const res = await postJson("/api/admin/jobs/restore", { jobId });
     if (await handleUnauthorized(res)) return;
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
@@ -273,7 +269,7 @@ export default function AdminSubmissions() {
   }
 
   async function expireSweep() {
-    const res = await fetch("/api/admin/jobs/expire", { method: "POST" });
+    const res = await postJson("/api/admin/jobs/expire");
     if (await handleUnauthorized(res)) return;
     const data = await res.json().catch(() => ({}));
     if (!res.ok) return alert(data.error ?? "Blad oznaczania wygaslych");
@@ -284,11 +280,7 @@ export default function AdminSubmissions() {
     const confirmed = window.confirm("Usunac ten rekord? Jesli oferta byla opublikowana, powiazany wpis w jobs tez zostanie usuniety.");
     if (!confirmed) return;
     setBusyId(submissionId);
-    const res = await fetch("/api/admin/submissions/delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ submissionId }),
-    });
+    const res = await postJson("/api/admin/submissions/delete", { submissionId });
     if (await handleUnauthorized(res)) return;
     const data = await res.json().catch(() => ({}));
     setBusyId(null);
@@ -337,10 +329,11 @@ export default function AdminSubmissions() {
     const expiresAt = String(expiresAtByJobId[jobId] ?? "").trim();
     if (!pay || !description) return alert("Uzupelnij stawke i opis.");
     setBusyId(submissionId);
-    const res = await fetch("/api/admin/jobs/update", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobId, pay, description, expiresAt: expiresAt ? `${expiresAt}T23:59:59.000Z` : null }),
+    const res = await postJson("/api/admin/jobs/update", {
+      jobId,
+      pay,
+      description,
+      expiresAt: expiresAt ? `${expiresAt}T23:59:59.000Z` : null,
     });
     if (await handleUnauthorized(res)) return;
     const data = await res.json().catch(() => ({}));
@@ -351,11 +344,7 @@ export default function AdminSubmissions() {
 
   async function extendPublishedJob(jobId: string, submissionId: string, days = 30) {
     setBusyId(submissionId);
-    const res = await fetch("/api/admin/jobs/extend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobId, days }),
-    });
+    const res = await postJson("/api/admin/jobs/extend", { jobId, days });
     if (await handleUnauthorized(res)) return;
     const data = await res.json().catch(() => ({}));
     setBusyId(null);

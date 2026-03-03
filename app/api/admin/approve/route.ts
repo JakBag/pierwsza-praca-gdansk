@@ -1,7 +1,8 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { requireAdminRequest } from "@/lib/security";
+import { requireAdminMutation } from "@/lib/security";
+import { adminApproveSchema, parseBody } from "@/lib/validation";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -10,21 +11,19 @@ function isEmail(value: string) {
 }
 
 export async function POST(req: Request) {
-  const guard = await requireAdminRequest(req);
+  const guard = await requireAdminMutation(req);
   if (guard) {
     return guard;
   }
 
-  const body = await req.json().catch(() => ({}));
-  const submissionId = String(body.submissionId ?? "").trim();
-  const pricePln = Number(body.pricePln ?? 0);
-
-  if (!submissionId) {
-    return NextResponse.json({ error: "Missing submissionId" }, { status: 400 });
+  const parsed = await parseBody(req, adminApproveSchema);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
+  const { submissionId, pricePln } = parsed.data;
 
   const update: { status: string; price_pln?: number } = { status: "approved_unpaid" };
-  if (Number.isFinite(pricePln) && pricePln > 0) {
+  if (typeof pricePln === "number" && Number.isFinite(pricePln) && pricePln > 0) {
     update.price_pln = Math.floor(pricePln);
   }
 
@@ -57,7 +56,7 @@ export async function POST(req: Request) {
   }
 
   const from = process.env.MAIL_FROM ?? "onboarding@resend.dev";
-  const subject = `Weryfikacja oferty zakończona: ${sub.title ?? "Oferta"}`;
+  const subject = `Weryfikacja oferty zakonczona: ${sub.title ?? "Oferta"}`;
   const safeCompany = String(sub.company ?? "Twoja firma");
   const effectivePrice = update.price_pln ?? Number(sub.price_pln ?? 0);
   const priceLine = Number.isFinite(effectivePrice) && effectivePrice > 0
@@ -69,15 +68,15 @@ export async function POST(req: Request) {
     to: companyEmail,
     subject,
     text: [
-      `Cześć ${safeCompany},`,
+      `Czesc ${safeCompany},`,
       "",
-      "Twoja oferta pomyślnie przeszła proces weryfikacji i oczekuje na płatność.",
+      "Twoja oferta pomyslnie przeszla proces weryfikacji i oczekuje na platnosc.",
       `Stanowisko: ${String(sub.title ?? "Oferta")}`,
       `Kwota: ${priceLine}`,
-      "Faktura zostanie wysłana przez Bizky.",
+      "Faktura zostanie wyslana przez Bizky.",
       "",
       "Pozdrawiamy,",
-      "Zespół Pierwsza Praca Gdańsk",
+      "Zespol Pierwsza Praca Gdansk",
     ].join("\n"),
   });
 
@@ -91,3 +90,4 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ success: true, mailed: true });
 }
+

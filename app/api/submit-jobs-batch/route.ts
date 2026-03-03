@@ -1,7 +1,8 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { internalError, requireRateLimit } from "@/lib/security";
+import { internalError, requireAllowedBrowserOrigin, requireRateLimit } from "@/lib/security";
+import { parseBody, submitJobsBatchSchema } from "@/lib/validation";
 
 type JobPayload = {
   company?: unknown;
@@ -36,24 +37,23 @@ function normalizeNip(value: unknown) {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
-  const website = String(body.website ?? "").trim();
+  const originGuard = requireAllowedBrowserOrigin(req);
+  if (originGuard) return originGuard;
 
-  const packageCode = String(body.packageCode ?? "").trim();
-  const packageSize = Number(body.packageSize ?? 0);
-  const jobs = Array.isArray(body.jobs) ? (body.jobs as JobPayload[]) : [];
+  const parsed = await parseBody(req, submitJobsBatchSchema);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+
+  const {
+    website,
+    packageCode,
+    packageSize,
+    jobs,
+  } = parsed.data as { website: string; packageCode: string; packageSize: number; jobs: JobPayload[] };
 
   if (website) {
-    // Honeypot: boty czesto wypelniaja ukryte pola.
     return NextResponse.json({ success: true, ignored: true });
-  }
-
-  if (!packageCode || !Number.isFinite(packageSize) || packageSize <= 0) {
-    return NextResponse.json({ error: "Niepoprawny pakiet" }, { status: 400 });
-  }
-
-  if (jobs.length !== packageSize) {
-    return NextResponse.json({ error: "Niepoprawna liczba formularzy" }, { status: 400 });
   }
 
   const rateLimit = await requireRateLimit(req, "submit-jobs-batch", 6, 10 * 60, jobs.length);
@@ -62,29 +62,13 @@ export async function POST(req: Request) {
   }
 
   for (const job of jobs) {
-    const company = String(job?.company ?? "").trim();
-    const title = String(job?.title ?? "").trim();
-    const contact = String(job?.contact ?? "").trim();
-    const district = String(job?.district ?? "").trim();
-    const description = String(job?.description ?? "").trim();
-    const pay = String(job?.pay ?? "").trim();
     const wantsInvoice = toBool(job?.wants_invoice);
     const invoiceNip = normalizeNip(job?.invoice_nip);
-
-    if (!company || !title || !contact || !district || !description) {
+    if (wantsInvoice && invoiceNip.length !== 10) {
       return NextResponse.json(
-        { error: "Uzupełnij wymagane pola we wszystkich formularzach" },
+        { error: "Jesli chcesz fakture, podaj poprawny NIP (10 cyfr)." },
         { status: 400 }
       );
-    }
-    if (!contact.includes("@")) {
-      return NextResponse.json({ error: "Niepoprawny email kontaktowy" }, { status: 400 });
-    }
-    if (pay && !/^\d+$/.test(pay)) {
-      return NextResponse.json({ error: "Stawka może zawierać tylko cyfry" }, { status: 400 });
-    }
-    if (wantsInvoice && invoiceNip.length !== 10) {
-      return NextResponse.json({ error: "Jesli chcesz fakturę, podaj poprawny NIP (10 cyfr) bez '- "}, { status: 400 });
     }
   }
 

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { requireAdminRequest } from "@/lib/security";
+import { requireAdminMutation } from "@/lib/security";
+import { adminRejectSchema, parseBody } from "@/lib/validation";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -10,21 +11,16 @@ function isEmail(value: string) {
 }
 
 export async function POST(req: Request) {
-  const guard = await requireAdminRequest(req);
+  const guard = await requireAdminMutation(req);
   if (guard) {
     return guard;
   }
 
-  const body = await req.json().catch(() => ({}));
-  const submissionId = String(body.submissionId ?? "").trim();
-  const reason = String(body.reason ?? "").trim();
-
-  if (!submissionId) {
-    return NextResponse.json({ error: "Missing submissionId" }, { status: 400 });
+  const parsed = await parseBody(req, adminRejectSchema);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
-  if (!reason) {
-    return NextResponse.json({ error: "Missing reason" }, { status: 400 });
-  }
+  const { submissionId, reason } = parsed.data;
 
   const { data: sub, error: subErr } = await supabaseServer
     .from("job_submissions")
@@ -88,5 +84,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ ok: true, mailed: true });
 }
-
-

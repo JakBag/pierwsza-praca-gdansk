@@ -1,10 +1,30 @@
 import crypto from "crypto";
+import net from "net";
 import { NextResponse } from "next/server";
-import { getAdminSessionFromRequest } from "@/lib/adminSession";
+import { getAdminSessionFromRequest, parseCookieHeader } from "@/lib/adminSession";
 import { logSecurityEvent } from "@/lib/monitoring";
 
 const DEFAULT_WINDOW_SEC = 10 * 60;
 const memoryRateLimitStore = new Map<string, number[]>();
+const ADMIN_SESSION_TTL_SEC = 8 * 60 * 60;
+const PRIMARY_ORIGIN = "https://pierwsza-praca-gdansk.pl";
+export const ADMIN_CSRF_COOKIE = "admin_csrf";
+
+function normalizeIp(raw: string | null) {
+  if (!raw) return "";
+  const value = raw.trim();
+  if (!value) return "";
+
+  // Handle RFC7239-like tokens: for="1.2.3.4" or for="[2001:db8::1]"
+  const unquoted = value.replace(/^for=/i, "").replace(/^"|\"$/g, "").trim();
+  const unbracketed = unquoted.startsWith("[") && unquoted.endsWith("]")
+    ? unquoted.slice(1, -1)
+    : unquoted;
+
+  const ipv4WithPort = unbracketed.match(/^(\d{1,3}(?:\.\d{1,3}){3}):(\d{1,5})$/);
+  const candidate = ipv4WithPort ? ipv4WithPort[1] : unbracketed;
+  return net.isIP(candidate) ? candidate : "";
+}
 
 function toBytes(value: string) {
   return Buffer.from(value, "utf8");
@@ -18,11 +38,59 @@ function safeEqual(a: string, b: string) {
 }
 
 export function getClientIp(req: Request) {
+  const directHeaders = [
+    req.headers.get("x-real-ip"),
+    req.headers.get("cf-connecting-ip"),
+    req.headers.get("x-vercel-forwarded-for"),
+  ];
+
+  for (const raw of directHeaders) {
+    const ip = normalizeIp(raw);
+    if (ip) return ip;
+  }
+
   const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0].trim();
-  const xrip = req.headers.get("x-real-ip");
-  if (xrip) return xrip.trim();
+  if (xff) {
+    // Use the right-most valid entry: with common proxy appending behavior,
+    // spoofed client-injected values stay on the left.
+    const parts = xff.split(",");
+    for (let i = parts.length - 1; i >= 0; i -= 1) {
+      const ip = normalizeIp(parts[i] ?? "");
+      if (ip) return ip;
+    }
+  }
+
   return "unknown";
+}
+
+function getAllowedOrigins() {
+  const origins = new Set<string>([PRIMARY_ORIGIN]);
+  const envOrigin = String(
+    process.env.APP_ORIGIN ?? process.env.NEXT_PUBLIC_APP_URL ?? ""
+  ).trim();
+  if (envOrigin) {
+    origins.add(envOrigin);
+  }
+  if (process.env.NODE_ENV !== "production") {
+    origins.add("http://localhost:3000");
+    origins.add("http://127.0.0.1:3000");
+  }
+  return origins;
+}
+
+export function isAllowedBrowserOrigin(origin: string) {
+  return getAllowedOrigins().has(origin);
+}
+
+export function requireAllowedBrowserOrigin(req: Request) {
+  const origin = req.headers.get("origin");
+  if (!origin) return null;
+  if (isAllowedBrowserOrigin(origin)) return null;
+
+  const route = new URL(req.url).pathname;
+  const ip = getClientIp(req);
+  logSecurityEvent({ status: 403, route, ip, tag: "origin_not_allowed" });
+  return NextResponse.json({ error: "Origin not allowed" }, { status: 403 });
 }
 
 function hashRateLimitKey(raw: string) {
@@ -114,6 +182,45 @@ export async function requireAdminRequest(req: Request) {
   const ip = getClientIp(req);
   logSecurityEvent({ status: 401, route, ip, tag: "admin_session_missing_or_invalid" });
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+
+export function createAdminCsrfToken() {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+export function getAdminCsrfCookieOptions() {
+  return {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict" as const,
+    path: "/",
+    maxAge: ADMIN_SESSION_TTL_SEC,
+  };
+}
+
+export function requireAdminCsrf(req: Request) {
+  const cookies = parseCookieHeader(req.headers.get("cookie"));
+  const tokenFromCookie = String(cookies[ADMIN_CSRF_COOKIE] ?? "");
+  const tokenFromHeader = String(req.headers.get("x-csrf-token") ?? "").trim();
+
+  if (!tokenFromCookie || !tokenFromHeader || !safeEqual(tokenFromCookie, tokenFromHeader)) {
+    const route = new URL(req.url).pathname;
+    const ip = getClientIp(req);
+    logSecurityEvent({ status: 403, route, ip, tag: "admin_csrf_failed" });
+    return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
+  }
+
+  return null;
+}
+
+export async function requireAdminMutation(req: Request) {
+  const originGuard = requireAllowedBrowserOrigin(req);
+  if (originGuard) return originGuard;
+
+  const authGuard = await requireAdminRequest(req);
+  if (authGuard) return authGuard;
+
+  return requireAdminCsrf(req);
 }
 
 export function internalError(label: string, error: unknown) {
