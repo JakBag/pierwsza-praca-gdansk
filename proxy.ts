@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, parseCookieHeader, verifyAdminSessionToken } from "@/lib/adminSession";
 
-const PRIMARY_ORIGIN = "https://pierwsza-praca-gdansk.pl";
+const PRIMARY_ORIGIN = "https://pierwszapracatrojmiasto.pl";
 
 function getAllowedOrigins() {
   const origins = new Set<string>([PRIMARY_ORIGIN]);
@@ -72,3 +72,4 @@ export function proxy(req: NextRequest) {
 export const config = {
   matcher: ["/admin/:path*", "/api/:path*"],
 };
+

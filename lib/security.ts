@@ -8,7 +8,7 @@ const DEFAULT_WINDOW_SEC = 10 * 60;
 const memoryRateLimitStore = new Map<string, number[]>();
 let rateLimitOps = 0;
 const ADMIN_SESSION_TTL_SEC = 8 * 60 * 60;
-const PRIMARY_ORIGIN = "https://pierwsza-praca-gdansk.pl";
+const PRIMARY_ORIGIN = "https://pierwszapracatrojmiasto.pl";
 export const ADMIN_CSRF_COOKIE = "admin_csrf";
 
 function normalizeIp(raw: string | null) {
@@ -274,3 +274,4 @@ export function internalError(label: string, error: unknown) {
   logSecurityEvent({ status: 500, route: "internal", ip: "-", tag: label });
   return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 }
+
