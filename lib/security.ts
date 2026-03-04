@@ -8,7 +8,7 @@ const DEFAULT_WINDOW_SEC = 10 * 60;
 const memoryRateLimitStore = new Map<string, number[]>();
 let rateLimitOps = 0;
 const ADMIN_SESSION_TTL_SEC = 8 * 60 * 60;
-const PRIMARY_ORIGIN = "https://pierwszapracatrojmiasto.pl";
+const DEFAULT_PRIMARY_ORIGIN = "https://pierwszapracatrojmiasto.pl";
 export const ADMIN_CSRF_COOKIE = "admin_csrf";
 
 function normalizeIp(raw: string | null) {
@@ -64,14 +64,32 @@ export function getClientIp(req: Request) {
   return "unknown";
 }
 
-function getAllowedOrigins() {
-  const origins = new Set<string>([PRIMARY_ORIGIN]);
-  const envOrigin = String(
-    process.env.APP_ORIGIN ?? process.env.NEXT_PUBLIC_APP_URL ?? ""
-  ).trim();
-  if (envOrigin) {
-    origins.add(envOrigin);
+function getRequestOrigin(req: Request) {
+  try {
+    return new URL(req.url).origin;
+  } catch {
+    return "";
   }
+}
+
+function getAllowedOrigins(req: Request) {
+  const origins = new Set<string>();
+  const requestOrigin = getRequestOrigin(req);
+  if (requestOrigin) origins.add(requestOrigin);
+
+  const primaryOrigin = String(
+    process.env.APP_ORIGIN ?? process.env.NEXT_PUBLIC_APP_URL ?? DEFAULT_PRIMARY_ORIGIN
+  ).trim();
+  if (primaryOrigin) origins.add(primaryOrigin);
+
+  const extraOrigins = String(process.env.ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map(origin => origin.trim())
+    .filter(Boolean);
+  for (const origin of extraOrigins) {
+    origins.add(origin);
+  }
+
   if (process.env.NODE_ENV !== "production") {
     origins.add("http://localhost:3000");
     origins.add("http://127.0.0.1:3000");
@@ -79,8 +97,8 @@ function getAllowedOrigins() {
   return origins;
 }
 
-export function isAllowedBrowserOrigin(origin: string) {
-  return getAllowedOrigins().has(origin);
+export function isAllowedBrowserOrigin(origin: string, req: Request) {
+  return getAllowedOrigins(req).has(origin);
 }
 
 type OriginGuardOptions = {
@@ -96,7 +114,7 @@ export function requireAllowedBrowserOrigin(req: Request, options: OriginGuardOp
     logSecurityEvent({ status: 403, route, ip, tag: "origin_missing" });
     return NextResponse.json({ error: "Missing Origin header" }, { status: 403 });
   }
-  if (isAllowedBrowserOrigin(origin)) return null;
+  if (isAllowedBrowserOrigin(origin, req)) return null;
 
   const route = new URL(req.url).pathname;
   const ip = getClientIp(req);
@@ -274,4 +292,3 @@ export function internalError(label: string, error: unknown) {
   logSecurityEvent({ status: 500, route: "internal", ip: "-", tag: label });
   return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 }
-

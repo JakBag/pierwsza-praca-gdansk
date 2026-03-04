@@ -1,16 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, parseCookieHeader, verifyAdminSessionToken } from "@/lib/adminSession";
 
-const PRIMARY_ORIGIN = "https://pierwszapracatrojmiasto.pl";
+const DEFAULT_PRIMARY_ORIGIN = "https://pierwszapracatrojmiasto.pl";
 
-function getAllowedOrigins() {
-  const origins = new Set<string>([PRIMARY_ORIGIN]);
-  const envOrigin = String(
-    process.env.APP_ORIGIN ?? process.env.NEXT_PUBLIC_APP_URL ?? ""
+function getRequestOrigin(req: NextRequest) {
+  return req.nextUrl.origin;
+}
+
+function getAllowedOrigins(req: NextRequest) {
+  const origins = new Set<string>();
+  const requestOrigin = getRequestOrigin(req);
+  if (requestOrigin) origins.add(requestOrigin);
+
+  const primaryOrigin = String(
+    process.env.APP_ORIGIN ?? process.env.NEXT_PUBLIC_APP_URL ?? DEFAULT_PRIMARY_ORIGIN
   ).trim();
-  if (envOrigin) {
-    origins.add(envOrigin);
+  if (primaryOrigin) origins.add(primaryOrigin);
+
+  const extraOrigins = String(process.env.ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map(origin => origin.trim())
+    .filter(Boolean);
+  for (const origin of extraOrigins) {
+    origins.add(origin);
   }
+
   if (process.env.NODE_ENV !== "production") {
     origins.add("http://localhost:3000");
     origins.add("http://127.0.0.1:3000");
@@ -20,8 +34,11 @@ function getAllowedOrigins() {
 
 function addCorsHeaders(req: NextRequest, res: NextResponse) {
   const origin = req.headers.get("origin");
-  const allowedOrigins = getAllowedOrigins();
-  const allowOrigin = origin && allowedOrigins.has(origin) ? origin : PRIMARY_ORIGIN;
+  const allowedOrigins = getAllowedOrigins(req);
+  const fallbackOrigin = getRequestOrigin(req) || String(
+    process.env.APP_ORIGIN ?? process.env.NEXT_PUBLIC_APP_URL ?? DEFAULT_PRIMARY_ORIGIN
+  ).trim();
+  const allowOrigin = origin && allowedOrigins.has(origin) ? origin : fallbackOrigin;
 
   res.headers.set("Access-Control-Allow-Origin", allowOrigin);
   res.headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
@@ -37,7 +54,7 @@ export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (pathname.startsWith("/api/")) {
     const origin = req.headers.get("origin");
-    if (origin && !getAllowedOrigins().has(origin)) {
+    if (origin && !getAllowedOrigins(req).has(origin)) {
       const blocked = NextResponse.json({ error: "Origin not allowed" }, { status: 403 });
       addCorsHeaders(req, blocked);
       return blocked;
