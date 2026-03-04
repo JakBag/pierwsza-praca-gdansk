@@ -4,6 +4,8 @@ import ApplyForm from "@/components/ApplyForm";
 import FormattedDescription from "@/components/FormattedDescription";
 import { getJobById } from "@/lib/jobsDb";
 
+export const dynamic = "force-dynamic";
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 function formatTimeCommitment(value: string | null) {

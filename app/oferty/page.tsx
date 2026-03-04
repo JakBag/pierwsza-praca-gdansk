@@ -3,6 +3,8 @@ import Navbar from "@/components/NavBar";
 import { getPublishedJobs } from "@/lib/jobsDb";
 import OffersClient from "@/components/OffersClient";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Oferty pracy dla studentow",
   description:

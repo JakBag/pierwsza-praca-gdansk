@@ -1,5 +1,5 @@
-import { supabase } from "@/lib/supabaseClient";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { unstable_noStore as noStore } from "next/cache";
 
 export type DbJob = {
   id: string;
@@ -36,10 +36,11 @@ async function purgeClosedJobsOlderThan10Days() {
 }
 
 export async function getPublishedJobs(): Promise<DbJob[]> {
+  noStore();
   await purgeClosedJobsOlderThan10Days();
   const now = new Date().toISOString();
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServer
     .from("jobs")
     .select("*")
     .eq("status", "active")
@@ -55,10 +56,11 @@ export async function getPublishedJobs(): Promise<DbJob[]> {
 }
 
 export async function getJobById(id: string): Promise<DbJob | null> {
+  noStore();
   await purgeClosedJobsOlderThan10Days();
   const now = new Date().toISOString();
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServer
     .from("jobs")
     .select("*")
     .eq("id", id)
