@@ -68,9 +68,9 @@ export default async function OfferDetailsPage({
 
   const normalizedPay = job.pay?.trim();
   const formattedPay = normalizedPay
-    ? /zl/i.test(normalizedPay)
-      ? normalizedPay
-      : `${normalizedPay} zl`
+    ? /zł|zl/i.test(normalizedPay)
+      ? normalizedPay.replace(/zl/gi, "zł")
+      : `${normalizedPay} zł`
     : "-";
   const postedMs = Date.parse(String(job.created_at ?? ""));
   const postedLabel = Number.isFinite(postedMs)

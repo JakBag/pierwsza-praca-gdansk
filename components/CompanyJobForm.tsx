@@ -189,7 +189,7 @@ function CompanyJobFormCard({ index, total, value, onChange }: CompanyJobFormCar
           <input
             id={`pay-${index}`}
             className={inputClassName}
-            placeholder="np. 27-32 zl/h brutto"
+            placeholder="np. 27-32 zł/h brutto"
             value={value.pay ?? ""}
             onChange={e => updateField("pay", e.target.value)}
           />
