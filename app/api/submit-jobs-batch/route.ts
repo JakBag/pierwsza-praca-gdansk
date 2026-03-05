@@ -106,7 +106,7 @@ export async function POST(req: Request) {
       ? job.tags.map(tag => String(tag).trim()).filter(Boolean)
       : [],
     city: job.city ? String(job.city).trim() : "Gdansk",
-    location: job.location ? String(job.location).trim() : "Gdansk",
+    location: job.location ? String(job.location).trim() : null,
     contract_type: job.contract_type ? String(job.contract_type).trim() : null,
     time_commitment: job.time_commitment ? String(job.time_commitment).trim() : null,
     work_mode: job.work_mode ? String(job.work_mode).trim() : null,

@@ -29,7 +29,7 @@ const EMPTY_DRAFT: JobDraft = {
   title: "",
   contact: "",
   description: "",
-  location: "Gdansk",
+  location: "",
   contract_type: "",
   time_commitment: "",
   work_mode: "",
