@@ -20,6 +20,7 @@ type Submission = {
   invoice_nip?: string | null;
   description: string;
   city: string | null;
+  district?: string | null;
   tags: string[] | null;
   status: string;
   payment_status?: string | null;
@@ -565,7 +566,17 @@ export default function AdminSubmissions() {
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Dane ogloszenia</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-slate-700 mt-2">
-                      <div>umowa: {item.contract_type ?? "-"}</div><div>wymiar: {formatTimeCommitment(item.time_commitment)}</div><div>tryb: {item.work_mode ?? "-"}</div><div>stawka: {item.pay ?? "-"}</div>
+                      <div>firma: {item.company ?? "-"}</div>
+                      <div>stanowisko: {item.title ?? "-"}</div>
+                      <div>kontakt: {item.contact ?? "-"}</div>
+                      <div>miasto: {item.city ?? "-"}</div>
+                      <div>dzielnica: {item.district ?? "-"}</div>
+                      <div>lokalizacja: {item.location ?? "-"}</div>
+                      <div>umowa: {item.contract_type ?? "-"}</div>
+                      <div>wymiar: {formatTimeCommitment(item.time_commitment)}</div>
+                      <div>tryb: {item.work_mode ?? "-"}</div>
+                      <div>stawka: {item.pay ?? "-"}</div>
+                      <div>wygasa: {expiresLabel}</div>
                     </div>
                     <div className="text-sm text-slate-700 mt-4 whitespace-pre-line">{item.description}</div>
                     <div className="flex flex-wrap gap-2 mt-3">{(item.tags ?? []).map(tag => <span key={tag} className="bg-emerald-600 text-white text-xs px-3 py-1 rounded-full">{tag}</span>)}</div>
