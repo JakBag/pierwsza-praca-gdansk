@@ -37,6 +37,7 @@ export async function POST(req: Request) {
     pay,
     expiresAt,
   } = parsed.data;
+  const normalizedDistrict = String(district ?? "").trim() || null;
 
   const { error } = await supabaseServer.from("job_submissions").insert({
     company,
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
     contact,
     description,
     city: city ?? "Gdansk",
-    district,
+    district: normalizedDistrict,
     tags,
     status: "pending",
     payment_status: "unpaid",

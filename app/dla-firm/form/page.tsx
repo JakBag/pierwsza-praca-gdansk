@@ -491,10 +491,6 @@ function FormContent({ pkgCode, size }: FormContentProps) {
         setErr("Uzupełnij: firma, stanowisko, kontakt i opis we wszystkich formularzach.");
         return;
       }
-      if (!f.district.trim()) {
-        setErr("Wybierz dzielnice dla każdego ogłoszenia.");
-        return;
-      }
       if (!isValidEmail(f.contact)) {
         setErr("Kontakt musi być poprawnym emailem (musi zawierać znak @).");
         return;

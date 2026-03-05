@@ -99,7 +99,7 @@ export async function POST(req: Request) {
     company: String(job.company ?? "").trim(),
     title: String(job.title ?? "").trim(),
     contact: String(job.contact ?? "").trim(),
-    district: String(job.district ?? "").trim(),
+    district: String(job.district ?? "").trim() || null,
     wants_invoice: toBool(job.wants_invoice),
     invoice_nip: toBool(job.wants_invoice) ? normalizeNip(job.invoice_nip) : null,
     promocode: job.promocode ? String(job.promocode).trim() : null,

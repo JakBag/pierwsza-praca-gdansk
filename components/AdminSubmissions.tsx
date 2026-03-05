@@ -571,7 +571,7 @@ export default function AdminSubmissions() {
                       <div>stanowisko: {item.title ?? "-"}</div>
                       <div>kontakt: {item.contact ?? "-"}</div>
                       <div>miasto: {item.city ?? "-"}</div>
-                      <div>dzielnica: {item.district ?? "-"}</div>
+                      <div>dzielnica: {String(item.district ?? "").trim() || "-"}</div>
                       <div>lokalizacja: {item.location ?? "-"}</div>
                       <div>umowa: {item.contract_type ?? "-"}</div>
                       <div>wymiar: {formatTimeCommitment(item.time_commitment)}</div>
