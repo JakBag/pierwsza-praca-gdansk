@@ -497,8 +497,8 @@ function FormContent({ pkgCode, size }: FormContentProps) {
         setErr("Kontakt musi być poprawnym emailem (musi zawierać znak @).");
         return;
       }
-      if (f.pay.trim() && !/^\d+$/.test(f.pay.trim())) {
-        setErr("Stawka może zawierac tylko cyfry.");
+      if (f.pay.trim() && !/^\d+(?:[,.]\d+)?$/.test(f.pay.trim())) {
+        setErr("Stawka może zawierać cyfry oraz opcjonalnie przecinek (np. 31,5).");
         return;
       }
       if (f.wants_invoice) {
@@ -688,9 +688,9 @@ function FormContent({ pkgCode, size }: FormContentProps) {
                 className="border border-slate-200 rounded-xl px-3 py-2"
                 placeholder="Stawka godzinowa"
                 value={f.pay}
-                inputMode="numeric"
-                pattern="[0-9]*"
-                onChange={e => update(i, { pay: e.target.value.replace(/\D+/g, "") })}
+                inputMode="decimal"
+                pattern="[0-9]+([,.][0-9]+)?"
+                onChange={e => update(i, { pay: e.target.value.replace(/[^\d,.\s]/g, "").trim() })}
               />
 
               <select

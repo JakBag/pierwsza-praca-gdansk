@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const PAY_PATTERN = /^\d+(?:[,.]\d+)?$/;
+
 const HTML_PATTERN = /<[^>]+>/;
 
 function plainText(label: string, max: number, min = 1) {
@@ -78,7 +80,7 @@ export const submitJobsSchema = z.object({
   contractType: plainText("contractType", 60),
   timeCommitment: plainText("timeCommitment", 60),
   workMode: plainText("workMode", 60),
-  pay: z.string().trim().regex(/^\d+$/, "Pay must contain digits only").max(20),
+  pay: z.string().trim().regex(PAY_PATTERN, "Pay must be a number, e.g. 31 or 31,5").max(20),
   expiresAt: optionalIsoDate("expiresAt"),
 });
 
@@ -100,7 +102,7 @@ const submitBatchJobSchema = z.object({
     .string()
     .trim()
     .max(20, "pay is too long")
-    .refine(value => !value || /^\d+$/.test(value), "Pay must contain digits only")
+    .refine(value => !value || PAY_PATTERN.test(value), "Pay must be a number, e.g. 31 or 31,5")
     .optional()
     .default(""),
   expires_at: optionalIsoDate("expires_at"),
