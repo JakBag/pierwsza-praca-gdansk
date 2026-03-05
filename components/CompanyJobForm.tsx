@@ -6,9 +6,9 @@ const inputClassName =
   "mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400";
 
 const PACKAGES = [
-  { code: "p1", label: "1 ogloszenie", size: 1 },
-  { code: "p3", label: "3 ogloszenia", size: 3 },
-  { code: "p5", label: "5 ogloszen", size: 5 },
+  { code: "p1", label: "1 ogłoszenie", size: 1 },
+  { code: "p3", label: "3 ogłoszenia", size: 3 },
+  { code: "p5", label: "5 ogłoszeń", size: 5 },
 ] as const;
 
 type JobDraft = {
@@ -139,9 +139,9 @@ function CompanyJobFormCard({ index, total, value, onChange }: CompanyJobFormCar
             >
               <option value="">Wybierz</option>
               <option value="Umowa zlecenie">Umowa zlecenie</option>
-              <option value="Umowa o prace">Umowa o prace</option>
+              <option value="Umowa o prace">Umowa o pracę</option>
               <option value="B2B">B2B</option>
-              <option value="Staz / praktyki">Staz / praktyki</option>
+              <option value="Staz / praktyki">Staż / praktyki</option>
               <option value="Inne">Inne</option>
             </select>
           </div>
@@ -251,7 +251,7 @@ export default function CompanyJobForm() {
 
     if (!res.ok) {
       const text = await res.text();
-      alert(`Blad API (${res.status}): ${text}`);
+      alert(`Błąd API (${res.status}): ${text}`);
       return;
     }
 

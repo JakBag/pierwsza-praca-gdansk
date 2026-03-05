@@ -11,7 +11,16 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 function formatTimeCommitment(value: string | null) {
   const raw = String(value ?? "").trim().toLowerCase();
   if (!raw) return "-";
-  if (raw === "pelny etat" || raw === "pelny etay") return "Pełny etat";
+  if (raw === "pelny etat" || raw === "pełny etat" || raw === "pelny etay") return "Pełny etat";
+  if (raw === "czesc etatu" || raw === "część etatu") return "Część etatu";
+  return value ?? "-";
+}
+
+function formatContractType(value: string | null) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return "-";
+  if (raw === "umowa o prace" || raw === "umowa o pracę") return "Umowa o pracę";
+  if (raw === "staz / praktyki" || raw === "staż / praktyki") return "Staż / praktyki";
   return value ?? "-";
 }
 
@@ -139,7 +148,7 @@ export default async function OfferDetailsPage({
                   {formattedPay} / h
                 </span>
                 <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">
-                  Umowa: {job.contract_type ?? "-"}
+                  Umowa: {formatContractType(job.contract_type)}
                 </span>
                 <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">
                   Wymiar: {formatTimeCommitment(job.time_commitment)}
@@ -178,3 +187,4 @@ export default async function OfferDetailsPage({
     </>
   );
 }
+

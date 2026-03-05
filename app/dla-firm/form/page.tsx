@@ -490,7 +490,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
         return;
       }
       if (!f.district.trim()) {
-        setErr("Wybierz dzielnice dla kazdego ogloszenia.");
+        setErr("Wybierz dzielnice dla każdego ogłoszenia.");
         return;
       }
       if (!isValidEmail(f.contact)) {
@@ -504,7 +504,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
       if (f.wants_invoice) {
         const nip = normalizeNip(f.invoice_nip);
         if (nip.length !== 10) {
-          setErr("Jesli chcesz fakture, podaj poprawny NIP (10 cyfr).");
+          setErr("Jeśli chcesz fakturę, podaj poprawny NIP (10 cyfr).");
           return;
         }
       }
@@ -669,7 +669,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
               >
                 <option value="">Wymiar czasu</option>
                 <option value="Pelny etat">Pełny etat</option>
-                <option value="Czesc etatu">Cześć etatu</option>
+                <option value="Czesc etatu">Część etatu</option>
                 <option value="Weekendy">Weekendy</option>
                 <option value="Elastycznie">Elastyczne godziny</option>
               </select>
@@ -781,7 +781,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
             </div>
 
             <div className="mt-4">
-              <label className="text-sm font-semibold text-slate-900">Tagi ogloszenia</label>
+              <label className="text-sm font-semibold text-slate-900">Tagi ogłoszenia</label>
 
               <div className="mt-2 flex flex-wrap gap-2">
                 {suggestedTags.map(tag => {
@@ -828,7 +828,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
                   }
                   className="rounded-full border border-slate-300 text-slate-700 text-sm px-4 py-1.5 hover:bg-slate-50"
                 >
-                  + Napisz swoj tag
+                  + Napisz swój tag
                 </button>
               </div>
 
@@ -864,7 +864,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
                       })
                     }
                   />
-                  Chce fakture
+                  Chcę fakturę
                 </label>
                 {f.wants_invoice && (
                   <input
@@ -888,7 +888,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
           onClick={submitAll}
           className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white px-6 py-3 rounded-xl font-medium"
         >
-          {sending ? "Wysylanie..." : "Wyslij pakiet"}
+          {sending ? "Wysyłanie..." : "Wyślij pakiet"}
         </button>
       </div>
     </>
