@@ -89,6 +89,17 @@ export default async function OfferDetailsPage({
   const expiresLabel = Number.isFinite(expiresMs)
     ? `Wygasa ${new Date(expiresMs).toLocaleDateString("pl-PL")}`
     : "Bez terminu";
+  const cityValue = String(job.city ?? "").trim();
+  const districtValue = String(job.district ?? "").trim();
+  const locationValue = String(job.location ?? "").trim();
+  const cityLabel = [cityValue, districtValue].filter(Boolean).join(" - ");
+  const normalizedLocation = locationValue.toLowerCase();
+  const normalizedCity = cityValue.toLowerCase();
+  const showLocation = Boolean(
+    locationValue &&
+      normalizedLocation !== normalizedCity &&
+      normalizedLocation !== "gdansk"
+  );
 
   const jobPostingSchema = {
     "@context": "https://schema.org",
@@ -106,7 +117,7 @@ export default async function OfferDetailsPage({
       "@type": "Place",
       address: {
         "@type": "PostalAddress",
-        addressLocality: job.city ?? "Gdańsk",
+        addressLocality: cityValue || undefined,
         addressCountry: "PL",
       },
     },
@@ -132,15 +143,18 @@ export default async function OfferDetailsPage({
                   <span className="h-2 w-2 rounded-full bg-emerald-300" />
                   {job.company}
                 </span>
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-cyan-200" />
-                  {job.city ?? "-"}
-                  {job.district ? ` - ${job.district}` : ""}
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-blue-100" />
-                  {job.location ?? "-"}
-                </span>
+                {cityLabel ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-cyan-200" />
+                    {cityLabel}
+                  </span>
+                ) : null}
+                {showLocation ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-blue-100" />
+                    {locationValue}
+                  </span>
+                ) : null}
               </div>
 
               <div className="mt-5 pt-4 border-t border-white/20 flex flex-wrap gap-2">

@@ -65,7 +65,7 @@ export async function POST(req: Request) {
       city: sub.city ?? "Gdansk",
       district: sub.district ?? null,
       tags: sub.tags ?? [],
-      location: sub.location ?? "Gdansk",
+      location: sub.location ?? null,
       contract_type: sub.contract_type ?? null,
       time_commitment: sub.time_commitment ?? null,
       work_mode: sub.work_mode ?? null,

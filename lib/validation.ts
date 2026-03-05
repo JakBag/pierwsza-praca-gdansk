@@ -91,6 +91,7 @@ const submitBatchJobSchema = z.object({
   district: plainText("district", 80),
   wants_invoice: z.boolean().optional().default(false),
   invoice_nip: z.string().trim().max(32).optional().default(""),
+  promocode: optionalPlainText("promocode", 80),
   description: plainText("description", 4000),
   tags: tagsSchema,
   city: optionalPlainText("city", 80),

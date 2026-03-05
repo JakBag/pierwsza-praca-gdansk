@@ -16,6 +16,7 @@ type JobPayload = {
   district?: unknown;
   wants_invoice?: unknown;
   invoice_nip?: unknown;
+  promocode?: unknown;
   description?: unknown;
   tags?: unknown;
   city?: unknown;
@@ -101,6 +102,7 @@ export async function POST(req: Request) {
     district: String(job.district ?? "").trim(),
     wants_invoice: toBool(job.wants_invoice),
     invoice_nip: toBool(job.wants_invoice) ? normalizeNip(job.invoice_nip) : null,
+    promocode: job.promocode ? String(job.promocode).trim() : null,
     description: String(job.description ?? "").trim(),
     tags: Array.isArray(job.tags)
       ? job.tags.map(tag => String(tag).trim()).filter(Boolean)

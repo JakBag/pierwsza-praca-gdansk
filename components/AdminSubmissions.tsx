@@ -18,6 +18,7 @@ type Submission = {
   contact: string;
   wants_invoice?: boolean | null;
   invoice_nip?: string | null;
+  promocode?: string | null;
   description: string;
   city: string | null;
   district?: string | null;
@@ -553,7 +554,7 @@ export default function AdminSubmissions() {
                   <div className="mt-4">
                     <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tylko admin</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-slate-700 mt-2">
-                      <div>price_pln: {item.price_pln ?? "-"}</div><div>invoice_ref: {item.invoice_ref ?? "-"}</div><div>expires_at: {expiresLabel}</div><div>kontakt: {item.contact ?? "-"}</div><div>faktura: {item.wants_invoice ? "tak" : "nie"}</div><div>NIP: {item.wants_invoice ? (item.invoice_nip ?? "-") : "-"}</div>
+                      <div>price_pln: {item.price_pln ?? "-"}</div><div>invoice_ref: {item.invoice_ref ?? "-"}</div><div>expires_at: {expiresLabel}</div><div>kontakt: {item.contact ?? "-"}</div><div>faktura: {item.wants_invoice ? "tak" : "nie"}</div><div>NIP: {item.wants_invoice ? (item.invoice_nip ?? "-") : "-"}</div><div>promocode: {item.promocode ?? "-"}</div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-slate-700 mt-2">
                       <div>wyslano formularz: {submittedAtLabel}</div>

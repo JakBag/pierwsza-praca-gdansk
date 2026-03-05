@@ -11,6 +11,7 @@ type JobDraft = {
   district: string;
   wants_invoice: boolean;
   invoice_nip: string;
+  promocode: string;
   description: string;
   tags: string[];
   city: string;
@@ -31,6 +32,7 @@ const EMPTY: JobDraft = {
   district: "",
   wants_invoice: false,
   invoice_nip: "",
+  promocode: "",
   description: "",
   tags: [],
   city: "Gdansk",
@@ -523,6 +525,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
         return {
           ...f,
           invoice_nip: f.wants_invoice ? normalizeNip(f.invoice_nip) : "",
+          promocode: String(f.promocode ?? "").trim(),
           expires_at: expiresAtIso,
         };
       });
@@ -876,6 +879,12 @@ function FormContent({ pkgCode, size }: FormContentProps) {
                     onChange={e => update(i, { invoice_nip: e.target.value.replace(/\D+/g, "") })}
                   />
                 )}
+                <input
+                  className="mt-2 w-full border border-slate-200 rounded-xl px-3 py-2"
+                  placeholder="Kod promocyjny (opcjonalnie)"
+                  value={f.promocode}
+                  onChange={e => update(i, { promocode: e.target.value })}
+                />
               </div>
             </div>
           </section>
