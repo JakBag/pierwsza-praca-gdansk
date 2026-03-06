@@ -49,7 +49,7 @@ export default function ForStudentsPage() {
           </div>
 
           <section className="mt-12 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8">
-            <h2 className="text-2xl font-bold text-slate-900">Artykuł SEO</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Artykuł </h2>
 
             <article className="mt-6">
               <h3 className="text-xl font-semibold text-slate-900">

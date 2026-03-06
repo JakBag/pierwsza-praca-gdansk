@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Navbar from "@/components/NavBar";
 import ApplyForm from "@/components/ApplyForm";
 import FormattedDescription from "@/components/FormattedDescription";
-import { getJobById } from "@/lib/jobsDb";
+import { getJobById, getPublishedJobs } from "@/lib/jobsDb";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,17 @@ export default async function OfferDetailsPage({
       normalizedLocation !== normalizedCity &&
       normalizedLocation !== "gdansk"
   );
+  const allJobs = await getPublishedJobs();
+  const relatedJobs = allJobs
+    .filter(item => item.id !== job.id)
+    .sort((a, b) => {
+      const aSameCity = String(a.city ?? "").trim().toLowerCase() === normalizedCity;
+      const bSameCity = String(b.city ?? "").trim().toLowerCase() === normalizedCity;
+      if (aSameCity && !bSameCity) return -1;
+      if (!aSameCity && bSameCity) return 1;
+      return 0;
+    })
+    .slice(0, 3);
 
   const jobPostingSchema = {
     "@context": "https://schema.org",
@@ -193,6 +205,26 @@ export default async function OfferDetailsPage({
             <ApplyForm jobId={job.id} />
           </aside>
         </div>
+
+        {relatedJobs.length > 0 ? (
+          <section className="max-w-[1200px] mx-auto px-6 pb-12">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6">
+              <h2 className="text-xl font-bold text-slate-900">Podobne oferty pracy</h2>
+              <div className="mt-4 space-y-3">
+                {relatedJobs.map(item => (
+                  <Link
+                    key={item.id}
+                    href={`/oferty/${item.id}`}
+                    className="block rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 hover:border-emerald-300 hover:bg-emerald-50 transition-colors"
+                  >
+                    {item.title}
+                    {item.city ? ` - ${item.city}` : ""}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
       </main>
       <script
         type="application/ld+json"
