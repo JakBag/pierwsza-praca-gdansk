@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+锘縤mport type { Metadata } from "next";
 import Link from "next/link";
 import Navbar from "@/components/NavBar";
 import Hero from "@/components/Hero";
@@ -7,9 +7,9 @@ import { getPublishedJobs } from "@/lib/jobsDb";
 import OffersClient from "@/components/OffersClient";
 
 export const metadata: Metadata = {
-  title: "Praca dla student體",
+  title: "Praca dla student贸w",
   description:
-    "Praca dla student體 w Polsce (Tr骿miasto): pierwsza praca bez do渨iadczenia, praca dorywcza, na p蟪 etatu i weekendowa.",
+    "Praca dla student贸w w Polsce (Tr贸jmiasto): pierwsza praca bez do艣wiadczenia, praca dorywcza, na p贸艂 etatu i weekendowa.",
   alternates: {
     canonical: "/",
   },
@@ -50,7 +50,7 @@ export default async function Home() {
 
       <section id="oferty" className="bg-slate-50">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 sm:py-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Sprawdzone oferty pracy dla student體</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Sprawdzone oferty pracy dla student贸w</h2>
 
           <div className="mt-8">
             <OffersClient jobs={jobs} />
@@ -60,3 +60,4 @@ export default async function Home() {
     </>
   );
 }
+
