@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
+import { getResendClient } from "@/lib/resendServer";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { requireAdminMutation } from "@/lib/security";
 import { adminMarkPaidSchema, parseBody } from "@/lib/validation";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -106,6 +104,15 @@ export async function POST(req: Request) {
   const safeCompany = String(sub.company ?? "Twoja firma");
   const safeTitle = String(sub.title ?? "Oferta");
   const subject = `Platnosc zaksiegowana i oferta opublikowana: ${safeTitle}`;
+  const resend = getResendClient();
+  if (!resend) {
+    return NextResponse.json({
+      success: true,
+      jobId: jobRow.id,
+      mailed: false,
+      warning: "Brak konfiguracji RESEND_API_KEY",
+    });
+  }
 
   const send = await resend.emails.send({
     from,

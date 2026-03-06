@@ -1,11 +1,9 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
+import { getResendClient } from "@/lib/resendServer";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { getClientIp, internalError, requireAllowedBrowserOrigin, requireSubmissionTiming } from "@/lib/security";
 import { applySchema, parseBody } from "@/lib/validation";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 function isEmail(s: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
@@ -133,6 +131,14 @@ export async function POST(req: Request) {
       `ID zgloszenia: ${appRow.id}`,
       `Data: ${appRow.created_at}`,
     ].join("\n");
+    const resend = getResendClient();
+    if (!resend) {
+      return NextResponse.json({
+        success: true,
+        emailed: false,
+        warning: "Brak konfiguracji RESEND_API_KEY",
+      });
+    }
 
     const send = await resend.emails.send({
       from,
