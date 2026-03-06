@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Pierwsza Praca Gdansk",
+    name: "Pierwsza Praca Gdańsk",
     short_name: "Pierwsza Praca",
-    description: "Oferty pracy dla studentow i osob bez doswiadczenia.",
+    description: "Oferty pracy dla studentów i osób bez doświadczenia.",
     start_url: "/",
     display: "standalone",
     background_color: "#f8fafc",

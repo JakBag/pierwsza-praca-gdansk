@@ -30,19 +30,19 @@ export const metadata: Metadata = {
     apple: "/logo.png",
   },
   title: {
-    default: "Pierwsza Praca Gdansk",
-    template: "%s | Pierwsza Praca Gdansk",
+    default: "Pierwsza Praca Gdańsk",
+    template: "%s | Pierwsza Praca Gdańsk",
   },
   description:
-    "Oferty pracy dla studentow i osob bez doswiadczenia. Pierwsza praca, praca dorywcza, na pol etatu i weekendowa w Trojmiescie (Polska).",
+    "Oferty pracy dla studentów i osób bez doświadczenia. Pierwsza praca, praca dorywcza, na pół etatu i weekendowa w Trójmieście (Polska).",
   keywords: [
-    "praca dla studentow",
-    "praca bez doswiadczenia",
-    "pierwsza praca bez doswiadczenia",
-    "praca dorywcza dla studentow",
-    "praca na pol etatu student",
+    "praca dla studentów",
+    "praca bez doświadczenia",
+    "pierwsza praca bez doświadczenia",
+    "praca dorywcza dla studentów",
+    "praca na pół etatu student",
     "praca weekendowa student",
-    "praca dla studentow Polska",
+    "praca dla studentów Polska",
   ],
   appleWebApp: {
     capable: true,

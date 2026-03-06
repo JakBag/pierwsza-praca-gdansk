@@ -2,7 +2,7 @@
 
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 declare global {
   interface Window {
@@ -18,35 +18,34 @@ type GoogleAnalyticsProps = {
 export default function GoogleAnalytics({ measurementId }: GoogleAnalyticsProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const hasTrackedFirstRoute = useRef(false);
 
   useEffect(() => {
-    if (!scriptLoaded) return;
-    window.dataLayer = window.dataLayer || [];
-    if (!window.gtag) {
-      window.gtag = (...args: unknown[]) => {
-        window.dataLayer?.push(args);
-      };
-    }
-    window.gtag("js", new Date());
-    window.gtag("config", measurementId, { send_page_view: false });
-  }, [measurementId, scriptLoaded]);
-
-  useEffect(() => {
-    if (!scriptLoaded) return;
     if (!window.gtag) return;
+    if (!hasTrackedFirstRoute.current) {
+      hasTrackedFirstRoute.current = true;
+      return;
+    }
     const query = searchParams.toString();
     const pagePath = query ? `${pathname}?${query}` : pathname;
     window.gtag("config", measurementId, { page_path: pagePath });
-  }, [measurementId, pathname, scriptLoaded, searchParams]);
+  }, [measurementId, pathname, searchParams]);
 
   return (
     <>
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
         strategy="afterInteractive"
-        onLoad={() => setScriptLoaded(true)}
       />
+      <Script id="ga-init" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          window.gtag = gtag;
+          gtag('js', new Date());
+          gtag('config', '${measurementId}');
+        `}
+      </Script>
     </>
   );
 }
