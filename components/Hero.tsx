@@ -16,8 +16,8 @@ export default function Hero() {
             <Link href="/oferty" className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold text-center">
               Zobacz oferty
             </Link>
-            <Link href="/jak-to-dziala" className="border border-white px-6 py-3 rounded-xl text-center">
-              Jak to działa (30 sekund)
+            <Link href="/dla-studentow" className="border border-white px-6 py-3 rounded-xl text-center">
+              Dla studentów (30 sekund)
             </Link>
           </div>
         </div>

@@ -10,7 +10,7 @@ export default function Navbar() {
 
   const links = [
     { href: "/oferty", label: "Oferty" },
-    { href: "/jak-to-dziala", label: "Jak to dziala" },
+    { href: "/dla-studentow", label: "Dla studentów" },
     { href: "/dla-firm", label: "Dla firm" },
     { href: "/pomoc", label: "Pomoc" },
     { href: "/privacy-policy", label: "Polityka prywatnosci" },
