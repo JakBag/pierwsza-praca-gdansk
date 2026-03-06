@@ -20,6 +20,7 @@ type JobDraft = {
   time_commitment: string;
   work_mode: string;
   pay: string;
+  pay_unit: "hour" | "month";
   expires_at: string | null;
   expires_mode: "months" | "date";
   expires_months: number;
@@ -41,6 +42,7 @@ const EMPTY: JobDraft = {
   time_commitment: "",
   work_mode: "",
   pay: "",
+  pay_unit: "hour",
   expires_at: null,
   expires_mode: "months",
   expires_months: 1,
@@ -147,6 +149,18 @@ function addMonthsIso(months: number) {
 
 function normalizeNip(value: string) {
   return String(value ?? "").replace(/\D+/g, "");
+}
+
+function parsePayNumbers(pay: string) {
+  const trimmed = String(pay ?? "").trim();
+  if (!trimmed) return null;
+  const match = trimmed.match(/^(\d+(?:[,.]\d+)?)(?:\s*-\s*(\d+(?:[,.]\d+)?))?$/);
+  if (!match) return null;
+  const first = Number(match[1].replace(",", "."));
+  const second = match[2] ? Number(match[2].replace(",", ".")) : null;
+  if (!Number.isFinite(first)) return null;
+  if (second !== null && !Number.isFinite(second)) return null;
+  return { first, second };
 }
 
 function escapeHtml(value: string) {
@@ -495,8 +509,23 @@ function FormContent({ pkgCode, size }: FormContentProps) {
         setErr("Kontakt musi być poprawnym emailem (musi zawierać znak @).");
         return;
       }
-      if (f.pay.trim() && !/^\d+(?:[,.]\d+)?$/.test(f.pay.trim())) {
-        setErr("Stawka może zawierać cyfry oraz opcjonalnie przecinek (np. 31,5).");
+      const payParsed = parsePayNumbers(f.pay);
+      if (f.pay.trim() && !payParsed) {
+        setErr("Stawka musi być liczbą lub widełkami (np. 31,4 albo 31,4-40).");
+        return;
+      }
+      if (payParsed) {
+        if (payParsed.first < 31.4 || (payParsed.second !== null && payParsed.second < 31.4)) {
+          setErr("Stawka musi być większa lub równa 31,4.");
+          return;
+        }
+        if (payParsed.second !== null && payParsed.second < payParsed.first) {
+          setErr("W widełkach druga kwota nie może być mniejsza od pierwszej.");
+          return;
+        }
+      }
+      if (!f.pay_unit || (f.pay_unit !== "hour" && f.pay_unit !== "month")) {
+        setErr("Wybierz jednostkę stawki: zł/h lub zł/mies.");
         return;
       }
       if (f.wants_invoice) {
@@ -520,6 +549,9 @@ function FormContent({ pkgCode, size }: FormContentProps) {
 
         return {
           ...f,
+          pay: f.pay.trim()
+            ? `${f.pay.trim().replace(/\s*-\s*/g, " - ")} ${f.pay_unit === "hour" ? "zł/h" : "zł/mies."}`
+            : "",
           invoice_nip: f.wants_invoice ? normalizeNip(f.invoice_nip) : "",
           promocode: String(f.promocode ?? "").trim(),
           expires_at: expiresAtIso,
@@ -683,14 +715,24 @@ function FormContent({ pkgCode, size }: FormContentProps) {
                 <option value="Zdalnie">Zdalnie</option>
                 <option value="Hybrydowo">Hybrydowo</option>
               </select>
-              <input
-                className="border border-slate-200 rounded-xl px-3 py-2"
-                placeholder="Stawka godzinowa"
-                value={f.pay}
-                inputMode="decimal"
-                pattern="[0-9]+([,.][0-9]+)?"
-                onChange={e => update(i, { pay: e.target.value.replace(/[^\d,.\s]/g, "").trim() })}
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-[2fr,1fr] gap-2">
+                <input
+                  className="border border-slate-200 rounded-xl px-3 py-2"
+                  placeholder="Stawka, np. 31,4 albo 31,4-40"
+                  value={f.pay}
+                  inputMode="decimal"
+                  pattern="[0-9]+([,.][0-9]+)?(\\s*-\\s*[0-9]+([,.][0-9]+)?)?"
+                  onChange={e => update(i, { pay: e.target.value.replace(/[^\d,.\-\s]/g, "").trim() })}
+                />
+                <select
+                  className="border border-slate-200 rounded-xl px-3 py-2 bg-white"
+                  value={f.pay_unit}
+                  onChange={e => update(i, { pay_unit: e.target.value as "hour" | "month" })}
+                >
+                  <option value="hour">zł/h</option>
+                  <option value="month">zł/mies.</option>
+                </select>
+              </div>
 
               <select
                 className="border border-slate-200 rounded-xl px-3 py-2 bg-white"

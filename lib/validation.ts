@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-const PAY_PATTERN = /^\d+(?:[,.]\d+)?$/;
+const PAY_PATTERN = /^(\d+(?:[,.]\d+)?)(?:\s*-\s*(\d+(?:[,.]\d+)?))?(?:\s*(?:zł)?\s*\/\s*(?:h|mies\.?))?$/i;
+const PAY_MIN = 31.4;
 
 const HTML_PATTERN = /<[^>]+>/;
 
@@ -30,6 +31,26 @@ function optionalIsoDate(label: string) {
     .refine(value => !value || Number.isFinite(Date.parse(value)), `${label} must be a valid date`)
     .optional()
     .nullable();
+}
+
+function parsePayNumbers(value: string) {
+  const trimmed = String(value ?? "").trim();
+  const match = trimmed.match(PAY_PATTERN);
+  if (!match) return null;
+  const first = Number(match[1].replace(",", "."));
+  const second = match[2] ? Number(match[2].replace(",", ".")) : null;
+  if (!Number.isFinite(first)) return null;
+  if (second !== null && !Number.isFinite(second)) return null;
+  return { first, second };
+}
+
+function hasValidPayRangeAndMin(value: string) {
+  const parsed = parsePayNumbers(value);
+  if (!parsed) return false;
+  if (parsed.first < PAY_MIN) return false;
+  if (parsed.second !== null && parsed.second < PAY_MIN) return false;
+  if (parsed.second !== null && parsed.second < parsed.first) return false;
+  return true;
 }
 
 export function firstZodError(error: z.ZodError) {
@@ -80,7 +101,11 @@ export const submitJobsSchema = z.object({
   contractType: plainText("contractType", 60),
   timeCommitment: plainText("timeCommitment", 60),
   workMode: plainText("workMode", 60),
-  pay: z.string().trim().regex(PAY_PATTERN, "Pay must be a number, e.g. 31 or 31,5").max(20),
+  pay: z
+    .string()
+    .trim()
+    .max(32)
+    .refine(hasValidPayRangeAndMin, "Pay must be >= 31,4 and can be a range (e.g. 31,4-40, zł/h or zł/mies.)"),
   expiresAt: optionalIsoDate("expiresAt"),
 });
 
@@ -102,8 +127,11 @@ const submitBatchJobSchema = z.object({
   pay: z
     .string()
     .trim()
-    .max(20, "pay is too long")
-    .refine(value => !value || PAY_PATTERN.test(value), "Pay must be a number, e.g. 31 or 31,5")
+    .max(32, "pay is too long")
+    .refine(
+      value => !value || hasValidPayRangeAndMin(value),
+      "Pay must be >= 31,4 and can be a range (e.g. 31,4-40, zł/h or zł/mies.)"
+    )
     .optional()
     .default(""),
   expires_at: optionalIsoDate("expires_at"),

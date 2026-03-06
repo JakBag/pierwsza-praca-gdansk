@@ -17,7 +17,7 @@ export default function Hero() {
               Zobacz oferty
             </Link>
             <Link href="/jak-to-dziala" className="border border-white px-6 py-3 rounded-xl text-center">
-              Jak to dziala (30 sekund)
+              Jak to działa (30 sekund)
             </Link>
           </div>
         </div>

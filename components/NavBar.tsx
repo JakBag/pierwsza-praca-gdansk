@@ -22,7 +22,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link href="/" className="font-bold text-lg text-slate-900">
-          Pierwsza Praca <span className="text-emerald-600">Trojmiasto</span>
+          Pierwsza Praca <span className="text-emerald-600">Trójmiasto</span>
         </Link>
 
         <nav className="hidden md:flex gap-8 text-slate-700">
