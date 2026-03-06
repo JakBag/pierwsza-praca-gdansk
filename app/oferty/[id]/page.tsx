@@ -6,7 +6,7 @@ import { getJobById } from "@/lib/jobsDb";
 
 export const dynamic = "force-dynamic";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pierwszapracatrojmiasto.pl";
 
 function formatTimeCommitment(value: string | null) {
   const raw = String(value ?? "").trim().toLowerCase();
@@ -201,4 +201,5 @@ export default async function OfferDetailsPage({
     </>
   );
 }
+
 

@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: "Praca dla studentów",
   description:
     "Praca dla studentów w Polsce (Trójmiasto): pierwsza praca bez doświadczenia, praca dorywcza, na pół etatu i weekendowa.",
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default async function Home() {

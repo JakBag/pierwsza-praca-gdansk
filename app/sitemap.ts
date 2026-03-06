@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getPublishedJobs } from "@/lib/jobsDb";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pierwszapracatrojmiasto.pl";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const jobs = await getPublishedJobs();
@@ -33,3 +33,4 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticUrls, ...offerUrls];
 }
+
