@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 const inputClassName =
   "mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400";
 
 const PACKAGES = [
-  { code: "p1", label: "1 ogłoszenie", size: 1 },
-  { code: "p3", label: "3 ogłoszenia", size: 3 },
-  { code: "p5", label: "5 ogłoszeń", size: 5 },
+  { code: "p1", label: "1 ogloszenie", size: 1 },
+  { code: "p3", label: "3 ogloszenia", size: 3 },
+  { code: "p5", label: "5 ogloszen", size: 5 },
 ] as const;
 
 type JobDraft = {
@@ -29,7 +29,7 @@ const EMPTY_DRAFT: JobDraft = {
   title: "",
   contact: "",
   description: "",
-  location: "",
+  location: "Gdansk",
   contract_type: "",
   time_commitment: "",
   work_mode: "",
@@ -120,7 +120,7 @@ function CompanyJobFormCard({ index, total, value, onChange }: CompanyJobFormCar
           <input
             id={`location-${index}`}
             className={inputClassName}
-            placeholder="np. Gdansk Wrzeszcz"
+            placeholder="np. Gdańsk Wrzeszcz"
             value={value.location ?? ""}
             onChange={e => updateField("location", e.target.value)}
           />
@@ -139,9 +139,9 @@ function CompanyJobFormCard({ index, total, value, onChange }: CompanyJobFormCar
             >
               <option value="">Wybierz</option>
               <option value="Umowa zlecenie">Umowa zlecenie</option>
-              <option value="Umowa o prace">Umowa o pracę</option>
+              <option value="Umowa o pracę">Umowa o prace</option>
               <option value="B2B">B2B</option>
-              <option value="Staz / praktyki">Staż / praktyki</option>
+              <option value="Staż / praktyki">Staż / praktyki</option>
               <option value="Inne">Inne</option>
             </select>
           </div>
@@ -189,7 +189,7 @@ function CompanyJobFormCard({ index, total, value, onChange }: CompanyJobFormCar
           <input
             id={`pay-${index}`}
             className={inputClassName}
-            placeholder="np. 27-32 zł/h brutto"
+            placeholder="np. 27-32 zl/h brutto"
             value={value.pay ?? ""}
             onChange={e => updateField("pay", e.target.value)}
           />
@@ -220,11 +220,6 @@ export default function CompanyJobForm() {
   const [forms, setForms] = useState<JobDraft[]>(
     Array.from({ length: PACKAGES[0].size }, () => ({ ...EMPTY_DRAFT }))
   );
-  const startedAtMsRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    startedAtMsRef.current = Date.now();
-  }, []);
 
   function updateForm(index: number, next: JobDraft) {
     setForms(prev => prev.map((draft, i) => (i === index ? next : draft)));
@@ -242,7 +237,6 @@ export default function CompanyJobForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        startedAtMs: startedAtMsRef.current ?? Date.now(),
         packageCode: pkg.code,
         packageSize: pkg.size,
         jobs: jobsPayload,
@@ -251,13 +245,12 @@ export default function CompanyJobForm() {
 
     if (!res.ok) {
       const text = await res.text();
-      alert(`Błąd API (${res.status}): ${text}`);
+      alert(`Blad API (${res.status}): ${text}`);
       return;
     }
 
     alert("Wysłane do weryfikacji.");
     setForms(Array.from({ length: pkg.size }, () => ({ ...EMPTY_DRAFT })));
-    startedAtMsRef.current = Date.now();
   }
 
   return (
@@ -275,7 +268,6 @@ export default function CompanyJobForm() {
             if (next) {
               setPkg(next);
               setForms(Array.from({ length: next.size }, () => ({ ...EMPTY_DRAFT })));
-              startedAtMsRef.current = Date.now();
             }
           }}
         >
