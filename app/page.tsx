@@ -32,7 +32,7 @@ export default async function Home() {
             {latestJobs.map(job => (
               <Link
                 key={job.id}
-                href={`/oferty/${job.id}`}
+                href={`/praca-dla-studentow-gdansk/${job.id}`}
                 className="block rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 hover:border-emerald-300 hover:bg-emerald-50 transition-colors"
               >
                 {job.title}
@@ -41,7 +41,7 @@ export default async function Home() {
             ))}
           </div>
           <div className="mt-5">
-            <Link href="/oferty" className="text-emerald-700 font-semibold hover:underline">
+            <Link href="/praca-dla-studentow-gdansk" className="text-emerald-700 font-semibold hover:underline">
               Zobacz wszystkie oferty
             </Link>
           </div>

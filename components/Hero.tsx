@@ -13,7 +13,7 @@ export default function Hero() {
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <Link href="/oferty" className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold text-center">
+            <Link href="/praca-dla-studentow-gdansk" className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold text-center">
               Zobacz oferty
             </Link>
             <Link href="/dla-studentow" className="border border-white px-6 py-3 rounded-xl text-center">

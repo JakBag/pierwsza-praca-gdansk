@@ -48,7 +48,7 @@ export default function JobCard({ job, isFavorite = false, onToggleFavorite }: J
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 hover:shadow-md transition">
       <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-        <Link href={`/oferty/${job.id}`} className="flex-1 min-w-0">
+        <Link href={`/praca-dla-studentow-gdansk/${job.id}`} className="flex-1 min-w-0">
           <h3 className="font-semibold text-slate-900">{job.title}</h3>
           <p className="text-sm text-slate-600">
             {job.company} - {toLabel(job.city)}
@@ -84,7 +84,7 @@ export default function JobCard({ job, isFavorite = false, onToggleFavorite }: J
             {isFavorite ? "♥" : "♡"}
           </button>
 
-          <Link href={`/oferty/${job.id}`} className="flex-1 sm:flex-none text-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl min-w-[120px]">
+          <Link href={`/praca-dla-studentow-gdansk/${job.id}`} className="flex-1 sm:flex-none text-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl min-w-[120px]">
             Zobacz
           </Link>
         </div>

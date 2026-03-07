@@ -41,7 +41,7 @@ export default function ForStudentsPage() {
 
           <div className="mt-8">
             <Link
-              href="/oferty"
+              href="/praca-dla-studentow-gdansk"
               className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700 transition-colors"
             >
               Zobacz oferty pracy
@@ -143,8 +143,8 @@ export default function ForStudentsPage() {
               <p className="text-slate-700 mt-2">
                 Jeśli szukasz pracy dla studenta w Trójmieście, sprawdź aktualne ogłoszenia na
                 {" "}
-                <Link href="/oferty" className="text-emerald-700 font-medium hover:underline">
-                  pierwszapracatrojmiasto.pl/oferty
+                <Link href="/praca-dla-studentow-gdansk" className="text-emerald-700 font-medium hover:underline">
+                  pierwszapracatrojmiasto.pl/praca-dla-studentow-gdansk
                 </Link>
                 .
               </p>
@@ -165,8 +165,8 @@ export default function ForStudentsPage() {
                 <p className="text-slate-700 mt-2">
                   Aktualne oferty dla Trójmiasta znajdziesz na
                   {" "}
-                  <Link href="/oferty" className="text-emerald-700 font-medium hover:underline">
-                    pierwszapracatrojmiasto.pl/oferty
+                  <Link href="/praca-dla-studentow-gdansk" className="text-emerald-700 font-medium hover:underline">
+                    pierwszapracatrojmiasto.pl/praca-dla-studentow-gdansk
                   </Link>
                   .
                 </p>
@@ -192,8 +192,8 @@ export default function ForStudentsPage() {
                 <p className="text-slate-700 mt-3">
                   Najszybciej przez dedykowane portale z ofertami dla studentów i osób bez doświadczenia, np.
                   {" "}
-                  <Link href="/oferty" className="text-emerald-700 font-medium hover:underline">
-                    pierwszapracatrojmiasto.pl/oferty
+                  <Link href="/praca-dla-studentow-gdansk" className="text-emerald-700 font-medium hover:underline">
+                    pierwszapracatrojmiasto.pl/praca-dla-studentow-gdansk
                   </Link>
                   . Sprawdzaj oferty codziennie i aplikuj od razu po publikacji.
                 </p>

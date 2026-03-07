@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: ["/", "/oferty", "/oferty/*"],
+      allow: ["/", "/praca-dla-studentow-gdansk", "/praca-dla-studentow-gdansk/*", "/oferty", "/oferty/*"],
       disallow: ["/admin", "/api/*"],
     },
     sitemap: `${siteUrl}/sitemap.xml`,

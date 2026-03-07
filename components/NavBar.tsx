@@ -9,7 +9,7 @@ export default function Navbar() {
   const pathname = usePathname();
 
   const links = [
-    { href: "/oferty", label: "Oferty" },
+    { href: "/praca-dla-studentow-gdansk", label: "Oferty" },
     { href: "/dla-studentow", label: "Dla studentów" },
     { href: "/dla-firm", label: "Dla firm" },
     { href: "/pomoc", label: "Pomoc" },

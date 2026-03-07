@@ -24,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${siteUrl}/oferty`,
+      url: `${siteUrl}/praca-dla-studentow-gdansk`,
       lastModified: lastmod,
       changeFrequency: "hourly",
       priority: 0.9,
@@ -38,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const offerUrls: MetadataRoute.Sitemap = jobs.map(job => ({
-    url: `${siteUrl}/oferty/${job.id}`,
+    url: `${siteUrl}/praca-dla-studentow-gdansk/${job.id}`,
     lastModified: toDateOnly(job.created_at) ?? fallbackDate,
     changeFrequency: "daily",
     priority: 0.8,

@@ -4,6 +4,20 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  async redirects() {
+    return [
+      {
+        source: "/oferty",
+        destination: "/praca-dla-studentow-gdansk",
+        permanent: true,
+      },
+      {
+        source: "/oferty/:id",
+        destination: "/praca-dla-studentow-gdansk/:id",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     const isProd = process.env.NODE_ENV === "production";
     const scriptSrc = [
