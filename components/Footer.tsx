@@ -11,7 +11,7 @@ export default function Footer() {
         </div>
         <div className="flex items-center gap-4 text-slate-700">
           <Link href="/privacy-policy" className="hover:text-slate-900 underline">
-            Polityka prywatnosci
+            Polityka prywatności
           </Link>
           <Link href="/pomoc" className="hover:text-slate-900 underline">
             Pomoc
@@ -20,7 +20,7 @@ export default function Footer() {
       </div>
       <div>
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3 text-xs md:text-sm text-slate-600">
-          Copyright (c) {year} Pierwsza Praca Trojmiasto. Wszelkie prawa zastrzezone.
+          Copyright (c) {year} Pierwsza Praca Trójmiasto. Wszelkie prawa zastrzeżone.
         </div>
       </div>
     </footer>

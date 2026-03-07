@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import Footer from "@/components/Footer";
@@ -24,6 +24,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://pierwszapracatrojmiasto.pl"),
+  applicationName: "Pierwsza Praca Trójmiasto",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -33,8 +34,8 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   title: {
-    default: "Pierwsza Praca Gdańsk",
-    template: "%s | Pierwsza Praca Gdańsk",
+    default: "Pierwsza Praca Trójmiasto",
+    template: "%s | Pierwsza Praca Trójmiasto",
   },
   description:
     "Oferty pracy dla studentów i osób bez doświadczenia. Pierwsza praca, praca dorywcza, na pół etatu i weekendowa w Trójmieście (Polska).",
@@ -47,9 +48,14 @@ export const metadata: Metadata = {
     "praca weekendowa student",
     "praca dla studentów Polska",
   ],
+  openGraph: {
+    siteName: "Pierwsza Praca Trójmiasto",
+    locale: "pl_PL",
+    type: "website",
+  },
   appleWebApp: {
     capable: true,
-    title: "Pierwsza Praca",
+    title: "Pierwsza Praca Trójmiasto",
     statusBarStyle: "default",
   },
 };
