@@ -144,7 +144,7 @@ function PaginatedOffers({
       {hasMoreJobs && (
         <button
           type="button"
-          className="w-1/2 mx-auto block bg-white border border-black text-black hover:bg-slate-50 py-3 rounded-xl font-medium"
+          className="w-1/2 pagi bg-white border border-black text-black hover:bg-slate-50 py-3 rounded-xl font-medium"
           onClick={() => setPage(prev => prev + 1)}
         >
           Wczytaj wiecej
@@ -164,7 +164,6 @@ export default function OffersClient({ jobs }: { jobs: DbJob[] }) {
   const [quickNoExp, setQuickNoExp] = useState(false);
   const [quickWeekend, setQuickWeekend] = useState(false);
   const [quickAsap, setQuickAsap] = useState(false);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const favoritesRaw = useSyncExternalStore(
     favoriteStore.subscribe,
     favoriteStore.getSnapshot,
@@ -270,19 +269,8 @@ export default function OffersClient({ jobs }: { jobs: DbJob[] }) {
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-      <div className="lg:hidden">
-        <button
-          type="button"
-          className="w-full bg-slate-900 text-white py-3 rounded-xl font-medium"
-          onClick={() => setShowMobileFilters(prev => !prev)}
-          aria-expanded={showMobileFilters}
-        >
-          {showMobileFilters ? "Ukryj filtry" : "Pokaz filtry"}
-        </button>
-      </div>
-
-      <aside className={`${showMobileFilters ? "block" : "hidden"} lg:block bg-white border border-slate-200 rounded-2xl p-5 h-fit space-y-4 lg:col-span-4 xl:col-span-3`}>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <aside className="bg-white border border-slate-200 rounded-2xl p-5 h-fit space-y-4 lg:col-span-4 xl:col-span-3">
         <div>
           <div className="text-sm font-semibold text-slate-900">Szukaj stanowiska</div>
           <input
