@@ -144,7 +144,7 @@ function PaginatedOffers({
       {hasMoreJobs && (
         <button
           type="button"
-          className="w-1/2 pagi bg-white border border-black text-black hover:bg-slate-50 py-3 rounded-xl font-medium"
+          className="block w-1/2 mx-auto bg-white border border-black text-black hover:bg-slate-50 py-3 rounded-xl font-medium"
           onClick={() => setPage(prev => prev + 1)}
         >
           Wczytaj wiecej
