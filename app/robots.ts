@@ -6,7 +6,15 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: ["/", "/praca-dla-studentow-gdansk", "/praca-dla-studentow-gdansk/*", "/oferty", "/oferty/*"],
+      allow: [
+        "/",
+        "/praca-dla-studenta-gdansk",
+        "/praca-dla-studenta-gdynia",
+        "/praca-dla-studenta-sopot",
+        "/praca-dla-studentow-gdansk/*",
+        "/oferty",
+        "/oferty/*",
+      ],
       disallow: ["/admin", "/api/*"],
     },
     sitemap: `${siteUrl}/sitemap.xml`,

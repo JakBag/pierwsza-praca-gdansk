@@ -27,6 +27,36 @@ export default async function Home() {
 
       <section className="bg-white border-y border-slate-200">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 sm:py-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Oferty pracy dla studentów według miasta</h2>
+          <p className="mt-3 max-w-3xl text-slate-600">
+            Jeśli szukasz lokalnej strony pod konkretne miasto, przejdź od razu do dedykowanej podstrony. To skraca
+            drogę do ofert zgodnych z intencją i ułatwia Google zrozumienie tematu strony.
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <Link
+              href="/praca-dla-studenta-gdansk"
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-slate-800 hover:border-emerald-300 hover:bg-emerald-50 transition-colors"
+            >
+              Praca dla studenta Gdańsk
+            </Link>
+            <Link
+              href="/praca-dla-studenta-gdynia"
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-slate-800 hover:border-emerald-300 hover:bg-emerald-50 transition-colors"
+            >
+              Oferty pracy dla studentów w Gdyni
+            </Link>
+            <Link
+              href="/praca-dla-studenta-sopot"
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-slate-800 hover:border-emerald-300 hover:bg-emerald-50 transition-colors"
+            >
+              Oferty pracy dla studentów w Sopocie
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white border-b border-slate-200">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 sm:py-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Najnowsze oferty pracy</h2>
           <div className="mt-5 space-y-3">
             {latestJobs.map(job => (
@@ -41,7 +71,7 @@ export default async function Home() {
             ))}
           </div>
           <div className="mt-5">
-            <Link href="/praca-dla-studentow-gdansk" className="text-emerald-700 font-semibold hover:underline">
+            <Link href="/praca-dla-studenta-gdansk" className="text-emerald-700 font-semibold hover:underline">
               Zobacz wszystkie oferty
             </Link>
           </div>

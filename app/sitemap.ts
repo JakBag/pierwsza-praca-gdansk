@@ -24,10 +24,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${siteUrl}/praca-dla-studentow-gdansk`,
+      url: `${siteUrl}/praca-dla-studenta-gdansk`,
       lastModified: lastmod,
       changeFrequency: "hourly",
       priority: 0.9,
+    },
+    {
+      url: `${siteUrl}/praca-dla-studenta-gdynia`,
+      lastModified: lastmod,
+      changeFrequency: "hourly",
+      priority: 0.85,
+    },
+    {
+      url: `${siteUrl}/praca-dla-studenta-sopot`,
+      lastModified: lastmod,
+      changeFrequency: "hourly",
+      priority: 0.85,
     },
     {
       url: `${siteUrl}/privacy-policy`,
@@ -46,4 +58,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticUrls, ...offerUrls];
 }
-

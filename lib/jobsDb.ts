@@ -21,6 +21,14 @@ export type DbJob = {
   created_at: string;
 };
 
+function normalizeCityValue(value: string | null | undefined) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 async function purgeClosedJobsOlderThan10Days() {
   const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -53,6 +61,13 @@ export async function getPublishedJobs(): Promise<DbJob[]> {
   }
 
   return (data ?? []) as DbJob[];
+}
+
+export async function getPublishedJobsByCity(city: string): Promise<DbJob[]> {
+  const jobs = await getPublishedJobs();
+  const expectedCity = normalizeCityValue(city);
+
+  return jobs.filter(job => normalizeCityValue(job.city) === expectedCity);
 }
 
 export async function getJobById(id: string): Promise<DbJob | null> {
