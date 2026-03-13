@@ -29,8 +29,7 @@ export default async function Home() {
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 sm:py-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Oferty pracy dla studentów według miasta</h2>
           <p className="mt-3 max-w-3xl text-slate-600">
-            Jeśli szukasz lokalnej strony pod konkretne miasto, przejdź od razu do dedykowanej podstrony. To skraca
-            drogę do ofert zgodnych z intencją i ułatwia Google zrozumienie tematu strony.
+            Jeśli szukasz lokalnej strony pod konkretne miasto, przejdź od razu do dedykowanej podstrony.
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <Link
