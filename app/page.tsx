@@ -77,7 +77,17 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="bg-white border-b border-slate-200">
+      <section id="oferty" className="bg-slate-50">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 sm:py-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Sprawdzone oferty pracy dla studentów</h2>
+
+          <div className="mt-8">
+            <OffersClient jobs={jobs} />
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white border-t border-slate-200">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 sm:py-12">
           <div className="max-w-4xl">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">FAQ o pracy dla studentów w Trójmieście</h2>
@@ -107,16 +117,6 @@ export default async function Home() {
                 </p>
               </details>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="oferty" className="bg-slate-50">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 sm:py-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Sprawdzone oferty pracy dla studentów</h2>
-
-          <div className="mt-8">
-            <OffersClient jobs={jobs} />
           </div>
         </div>
       </section>
