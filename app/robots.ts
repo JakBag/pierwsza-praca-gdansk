@@ -9,6 +9,10 @@ export default function robots(): MetadataRoute.Robots {
       allow: [
         "/",
         "/praca-dla-studenta-gdansk",
+        "/praca-bez-doswiadczenia-gdansk",
+        "/praca-weekendowa-student-gdansk",
+        "/praca-dorywcza-gdansk-student",
+        "/praca-zdalna-student-gdansk",
         "/praca-dla-studenta-gdynia",
         "/praca-dla-studenta-sopot",
         "/praca-dla-studentow-gdansk/*",

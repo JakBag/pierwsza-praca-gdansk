@@ -25,6 +25,14 @@ function formatContractType(value: string | null) {
   return value ?? "-";
 }
 
+function normalizeText(value: string | null | undefined) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -94,19 +102,16 @@ export default async function OfferDetailsPage({
   const districtValue = String(job.district ?? "").trim();
   const locationValue = String(job.location ?? "").trim();
   const cityLabel = [cityValue, districtValue].filter(Boolean).join(" - ");
-  const normalizedLocation = locationValue.toLowerCase();
-  const normalizedCity = cityValue.toLowerCase();
-  const showLocation = Boolean(
-    locationValue &&
-      normalizedLocation !== normalizedCity &&
-      normalizedLocation !== "gdansk"
-  );
+  const normalizedLocation = normalizeText(locationValue);
+  const normalizedCity = normalizeText(cityValue);
+  const showLocation = Boolean(locationValue && normalizedLocation !== normalizedCity && normalizedLocation !== "gdansk");
+  const isGdanskJob = normalizedCity === "gdansk";
   const allJobs = await getPublishedJobs();
   const relatedJobs = allJobs
     .filter(item => item.id !== job.id)
     .sort((a, b) => {
-      const aSameCity = String(a.city ?? "").trim().toLowerCase() === normalizedCity;
-      const bSameCity = String(b.city ?? "").trim().toLowerCase() === normalizedCity;
+      const aSameCity = normalizeText(a.city) === normalizedCity;
+      const bSameCity = normalizeText(b.city) === normalizedCity;
       if (aSameCity && !bSameCity) return -1;
       if (!aSameCity && bSameCity) return 1;
       return 0;
@@ -148,6 +153,16 @@ export default async function OfferDetailsPage({
         <div className="max-w-[1200px] mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
           <section className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
             <div className="px-8 py-7 bg-gradient-to-r from-blue-600 to-blue-400 text-white">
+              {isGdanskJob ? (
+                <div className="mb-4 text-sm text-blue-50">
+                  <Link href="/praca-dla-studenta-gdansk" className="font-semibold hover:text-white hover:underline">
+                    Praca student Gdańsk
+                  </Link>
+                  <span className="mx-2">/</span>
+                  <span>{job.title}</span>
+                </div>
+              ) : null}
+
               <h1 className="text-3xl font-bold leading-tight">{job.title}</h1>
 
               <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-blue-50">
@@ -170,9 +185,7 @@ export default async function OfferDetailsPage({
               </div>
 
               <div className="mt-5 pt-4 border-t border-white/20 flex flex-wrap gap-2">
-                <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">
-                  {formattedPay} / h
-                </span>
+                <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">{formattedPay} / h</span>
                 <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">
                   Umowa: {formatContractType(job.contract_type)}
                 </span>
@@ -182,12 +195,8 @@ export default async function OfferDetailsPage({
                 <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">
                   Tryb: {job.work_mode ?? "-"}
                 </span>
-                <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">
-                  {postedLabel}
-                </span>
-                <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">
-                  {expiresLabel}
-                </span>
+                <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">{postedLabel}</span>
+                <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">{expiresLabel}</span>
               </div>
             </div>
 
@@ -215,7 +224,7 @@ export default async function OfferDetailsPage({
                   <Link
                     key={item.id}
                     href={`/praca-dla-studentow-gdansk/${item.id}`}
-                    className="block rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 hover:border-emerald-300 hover:bg-emerald-50 transition-colors"
+                    className="block rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 transition-colors hover:border-emerald-300 hover:bg-emerald-50"
                   >
                     {item.title}
                     {item.city ? ` - ${item.city}` : ""}
@@ -226,12 +235,7 @@ export default async function OfferDetailsPage({
           </section>
         ) : null}
       </main>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }} />
     </>
   );
 }
-
-

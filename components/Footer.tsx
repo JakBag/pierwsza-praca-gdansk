@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -11,6 +11,11 @@ export default function Footer() {
           <a className="text-slate-900 underline" href="mailto:kontakt@pierwszapraca-gdansk.pl">
             kontakt@pierwszapraca-gdansk.pl
           </a>
+          <div className="mt-3">
+            <Link href="/praca-dla-studenta-gdansk" className="font-semibold text-slate-900 underline hover:text-emerald-700">
+              Praca student Gdańsk
+            </Link>
+          </div>
         </div>
         <div className="space-y-2 text-slate-700">
           <div className="font-semibold text-slate-900">Miasta</div>

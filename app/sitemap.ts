@@ -30,6 +30,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${siteUrl}/praca-bez-doswiadczenia-gdansk`,
+      lastModified: lastmod,
+      changeFrequency: "daily",
+      priority: 0.82,
+    },
+    {
+      url: `${siteUrl}/praca-weekendowa-student-gdansk`,
+      lastModified: lastmod,
+      changeFrequency: "daily",
+      priority: 0.82,
+    },
+    {
+      url: `${siteUrl}/praca-dorywcza-gdansk-student`,
+      lastModified: lastmod,
+      changeFrequency: "daily",
+      priority: 0.82,
+    },
+    {
+      url: `${siteUrl}/praca-zdalna-student-gdansk`,
+      lastModified: lastmod,
+      changeFrequency: "daily",
+      priority: 0.82,
+    },
+    {
       url: `${siteUrl}/praca-dla-studenta-gdynia`,
       lastModified: lastmod,
       changeFrequency: "hourly",

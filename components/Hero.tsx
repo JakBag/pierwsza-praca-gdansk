@@ -20,16 +20,19 @@ export default function Hero() {
               Dla studentów (30 sekund)
             </Link>
           </div>
+
+          <div className="mt-5">
+            <Link
+              href="/praca-dla-studenta-gdansk"
+              className="inline-flex text-sm font-semibold text-white underline underline-offset-4 hover:text-blue-100"
+            >
+              Praca student Gdańsk
+            </Link>
+          </div>
         </div>
 
         <div className="relative h-52 sm:h-64 lg:h-80 rounded-2xl overflow-hidden bg-white/20">
-          <Image
-            src="/hero.png"
-            alt="Praca dla studentów w Trójmieście"
-            fill
-            className="object-cover"
-            priority
-          />
+          <Image src="/hero.png" alt="Praca dla studentów w Trójmieście" fill className="object-cover" priority />
         </div>
       </div>
     </section>
