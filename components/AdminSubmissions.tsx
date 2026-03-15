@@ -16,6 +16,9 @@ type Submission = {
   company: string;
   title: string;
   contact: string;
+  is_aggregated?: boolean | null;
+  hide_expiration_date?: boolean | null;
+  external_apply_url?: string | null;
   wants_invoice?: boolean | null;
   invoice_nip?: string | null;
   promocode?: string | null;
@@ -101,6 +104,12 @@ export default function AdminSubmissions() {
   const [payByJobId, setPayByJobId] = useState<Record<string, string>>({});
   const [descriptionByJobId, setDescriptionByJobId] = useState<Record<string, string>>({});
   const [expiresAtByJobId, setExpiresAtByJobId] = useState<Record<string, string>>({});
+  const [isAggregatedBySubmissionId, setIsAggregatedBySubmissionId] = useState<Record<string, boolean>>({});
+  const [hideExpirationDateBySubmissionId, setHideExpirationDateBySubmissionId] = useState<Record<string, boolean>>({});
+  const [externalApplyUrlBySubmissionId, setExternalApplyUrlBySubmissionId] = useState<Record<string, string>>({});
+  const [isAggregatedByJobId, setIsAggregatedByJobId] = useState<Record<string, boolean>>({});
+  const [hideExpirationDateByJobId, setHideExpirationDateByJobId] = useState<Record<string, boolean>>({});
+  const [externalApplyUrlByJobId, setExternalApplyUrlByJobId] = useState<Record<string, string>>({});
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function handleUnauthorized(res: Response) {
@@ -257,7 +266,24 @@ export default function AdminSubmissions() {
   async function approveUnpaid(submissionId: string) {
     const rawPrice = (priceById[submissionId] ?? "").trim();
     const parsedPrice = Number(rawPrice);
-    const payload: { submissionId: string; pricePln?: number } = { submissionId };
+    const isAggregated = isAggregatedBySubmissionId[submissionId] ?? false;
+    const hideExpirationDate = hideExpirationDateBySubmissionId[submissionId] ?? false;
+    const externalApplyUrl = String(externalApplyUrlBySubmissionId[submissionId] ?? "").trim();
+    if (isAggregated && !externalApplyUrl) {
+      return alert("Dla oferty agregowanej podaj link do źródła, np. OLX.");
+    }
+    const payload: {
+      submissionId: string;
+      pricePln?: number;
+      isAggregated: boolean;
+      hideExpirationDate: boolean;
+      externalApplyUrl: string;
+    } = {
+      submissionId,
+      isAggregated,
+      hideExpirationDate,
+      externalApplyUrl,
+    };
     if (rawPrice && Number.isFinite(parsedPrice) && parsedPrice > 0) payload.pricePln = Math.floor(parsedPrice);
 
     setBusyId(submissionId);
@@ -275,10 +301,19 @@ export default function AdminSubmissions() {
   async function markPaidAndPublish(submissionId: string) {
     const invoiceRef = (invoiceById[submissionId] ?? "").trim();
     const parsedDuration = Number((durationById[submissionId] ?? "").trim());
+    const isAggregated = isAggregatedBySubmissionId[submissionId] ?? false;
+    const hideExpirationDate = hideExpirationDateBySubmissionId[submissionId] ?? false;
+    const externalApplyUrl = String(externalApplyUrlBySubmissionId[submissionId] ?? "").trim();
+    if (isAggregated && !externalApplyUrl) {
+      return alert("Dla oferty agregowanej podaj link do źródła, np. OLX.");
+    }
     const payload = {
       submissionId,
       invoiceRef,
       durationDays: Number.isFinite(parsedDuration) && parsedDuration > 0 ? Math.floor(parsedDuration) : 30,
+      isAggregated,
+      hideExpirationDate,
+      externalApplyUrl,
     };
     setBusyId(submissionId);
     const res = await postJson("/api/admin/submissions/mark-paid-and-publish", payload);
@@ -404,17 +439,25 @@ export default function AdminSubmissions() {
     return Math.max(0, months);
   }
 
-  async function savePublishedJob(jobId: string, submissionId: string) {
+  async function savePublishedJob(jobId: string, submissionId: string, currentItem: Submission) {
     const pay = String(payByJobId[jobId] ?? "").trim();
     const description = String(descriptionByJobId[jobId] ?? "").trim();
     const expiresAt = String(expiresAtByJobId[jobId] ?? "").trim();
-    if (!pay || !description) return alert("Uzupelnij stawke i opis.");
+    const isAggregated = isAggregatedByJobId[jobId] ?? Boolean(currentItem.is_aggregated);
+    const hideExpirationDate = hideExpirationDateByJobId[jobId] ?? Boolean(currentItem.hide_expiration_date);
+    const externalApplyUrl = String(externalApplyUrlByJobId[jobId] ?? currentItem.external_apply_url ?? "").trim();
+    if (isAggregated && !externalApplyUrl) {
+      return alert("Dla oferty agregowanej podaj link do źródła, np. OLX.");
+    }
     setBusyId(submissionId);
     const res = await postJson("/api/admin/jobs/update", {
       jobId,
       pay,
       description,
       expiresAt: expiresAt ? `${expiresAt}T23:59:59.000Z` : null,
+      isAggregated,
+      hideExpirationDate,
+      externalApplyUrl,
     });
     if (await handleUnauthorized(res)) {
       setBusyId(null);
@@ -527,6 +570,7 @@ export default function AdminSubmissions() {
           const isFromPackage = Boolean(batchId);
           const selectedMonths = selectedMonthsCount(item.created_at, item.expires_at);
           const expiresLabel = item.expires_at ? selectedMonths !== null ? `${formatDatePl(item.expires_at)} (${selectedMonths} mies.)` : formatDatePl(item.expires_at) : "-";
+          const publicExpiresLabel = item.hide_expiration_date ? "ukryta data" : expiresLabel;
           const waitDays = waitingDaysForUnpaid(item);
           const submittedAtLabel = formatDateTimePl(item.created_at);
           const approvedAtLabel = status === "approved_unpaid" ? formatDateTimePl(item.updated_at ?? item.created_at) : null;
@@ -571,13 +615,15 @@ export default function AdminSubmissions() {
                       <div>stanowisko: {item.title ?? "-"}</div>
                       <div>kontakt: {item.contact ?? "-"}</div>
                       <div>miasto: {item.city ?? "-"}</div>
+                      <div>oferta agregowana: {item.is_aggregated ? "tak" : "nie"}</div>
+                      <div>link zewnetrzny: {item.external_apply_url ?? "-"}</div>
                       <div>dzielnica: {String(item.district ?? "").trim() || "-"}</div>
                       <div>lokalizacja: {item.location ?? "-"}</div>
                       <div>umowa: {item.contract_type ?? "-"}</div>
                       <div>wymiar: {formatTimeCommitment(item.time_commitment)}</div>
                       <div>tryb: {item.work_mode ?? "-"}</div>
                       <div>stawka: {item.pay ?? "-"}</div>
-                      <div>wygasa: {expiresLabel}</div>
+                      <div>wygasa: {publicExpiresLabel}</div>
                     </div>
                     <div className="text-sm text-slate-700 mt-4 whitespace-pre-line">{item.description}</div>
                     <div className="flex flex-wrap gap-2 mt-3">{(item.tags ?? []).map(tag => <span key={tag} className="bg-emerald-600 text-white text-xs px-3 py-1 rounded-full">{tag}</span>)}</div>
@@ -587,6 +633,31 @@ export default function AdminSubmissions() {
                 <div className="w-full md:w-[330px] shrink-0 space-y-3">
                   {status === "pending" && (
                     <>
+                      <label className="flex items-center gap-2 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={isAggregatedBySubmissionId[item.id] ?? Boolean(item.is_aggregated)}
+                          onChange={e => setIsAggregatedBySubmissionId(prev => ({ ...prev, [item.id]: e.target.checked }))}
+                        />
+                        Oferta agregowana
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={hideExpirationDateBySubmissionId[item.id] ?? Boolean(item.hide_expiration_date)}
+                          onChange={e => setHideExpirationDateBySubmissionId(prev => ({ ...prev, [item.id]: e.target.checked }))}
+                        />
+                        Brak okreslonej daty na ofercie
+                      </label>
+                      <label className="block text-sm text-slate-700">
+                        Link do OLX / zrodla
+                        <input
+                          className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2"
+                          placeholder="https://www.olx.pl/..."
+                          value={externalApplyUrlBySubmissionId[item.id] ?? item.external_apply_url ?? ""}
+                          onChange={e => setExternalApplyUrlBySubmissionId(prev => ({ ...prev, [item.id]: e.target.value }))}
+                        />
+                      </label>
                       <label className="block text-sm text-slate-700">Cena (PLN)<input className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2" type="number" min={1} step={1} placeholder="np. 99" value={priceById[item.id] ?? ""} onChange={e => setPriceById(prev => ({ ...prev, [item.id]: e.target.value }))} /></label>
                       <label className="block text-sm text-slate-700">Uzasadnienie odrzucenia<textarea className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 min-h-[90px]" placeholder="Napisz krotko, dlaczego oferta zostala odrzucona" value={rejectReasonById[item.id] ?? ""} onChange={e => setRejectReasonById(prev => ({ ...prev, [item.id]: e.target.value }))} /></label>
                       <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl disabled:opacity-60" onClick={() => approveUnpaid(item.id)} disabled={busy}>Approve (czeka na platnosc)</button>
@@ -597,6 +668,31 @@ export default function AdminSubmissions() {
                   {status === "approved_unpaid" && (
                     <>
                       <div className="text-sm font-medium text-amber-700 bg-amber-100 rounded-xl px-3 py-2">Czeka na platnosc</div>
+                      <label className="flex items-center gap-2 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={isAggregatedBySubmissionId[item.id] ?? Boolean(item.is_aggregated)}
+                          onChange={e => setIsAggregatedBySubmissionId(prev => ({ ...prev, [item.id]: e.target.checked }))}
+                        />
+                        Oferta agregowana
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={hideExpirationDateBySubmissionId[item.id] ?? Boolean(item.hide_expiration_date)}
+                          onChange={e => setHideExpirationDateBySubmissionId(prev => ({ ...prev, [item.id]: e.target.checked }))}
+                        />
+                        Brak okreslonej daty na ofercie
+                      </label>
+                      <label className="block text-sm text-slate-700">
+                        Link do OLX / zrodla
+                        <input
+                          className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2"
+                          placeholder="https://www.olx.pl/..."
+                          value={externalApplyUrlBySubmissionId[item.id] ?? item.external_apply_url ?? ""}
+                          onChange={e => setExternalApplyUrlBySubmissionId(prev => ({ ...prev, [item.id]: e.target.value }))}
+                        />
+                      </label>
                       {waitDays !== null && (
                         <div className="text-sm font-medium text-slate-700 bg-slate-100 rounded-xl px-3 py-2">
                           Od akceptacji minelo: {waitDays} dni
@@ -621,10 +717,41 @@ export default function AdminSubmissions() {
                       <div className="text-sm font-medium text-indigo-700 bg-indigo-50 rounded-xl px-3 py-2">Zgloszenia: {item.applications_count ?? 0} | Ostatnie 7 dni: {item.applications_last_7d ?? 0}</div>
                       {closedOrExpiredInfo(item) && <div className="text-sm font-medium text-slate-700 bg-slate-100 rounded-xl px-3 py-2">{closedOrExpiredInfo(item)}</div>}
                       {jobId ? <Link href={`/praca-dla-studentow-gdansk/${jobId}`} className="text-sm text-blue-700 underline">/praca-dla-studentow-gdansk/{jobId}</Link> : <div className="text-sm text-slate-600">Brak powiazanego jobId.</div>}
-                      {jobId && <label className="block text-sm text-slate-700">Stawka<input className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2" value={payByJobId[jobId] ?? ""} onChange={e => setPayByJobId(prev => ({ ...prev, [jobId]: e.target.value }))} /></label>}
-                      {jobId && <label className="block text-sm text-slate-700">Opis oferty<textarea className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 min-h-[120px]" value={descriptionByJobId[jobId] ?? ""} onChange={e => setDescriptionByJobId(prev => ({ ...prev, [jobId]: e.target.value }))} /></label>}
+                      {jobId && <label className="block text-sm text-slate-700">Stawka<input className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2" value={payByJobId[jobId] ?? item.pay ?? ""} onChange={e => setPayByJobId(prev => ({ ...prev, [jobId]: e.target.value }))} /></label>}
+                      {jobId && <label className="block text-sm text-slate-700">Opis oferty<textarea className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 min-h-[120px]" value={descriptionByJobId[jobId] ?? item.description ?? ""} onChange={e => setDescriptionByJobId(prev => ({ ...prev, [jobId]: e.target.value }))} /></label>}
                       {jobId && <label className="block text-sm text-slate-700">Data wygasniecia<input className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2" type="date" value={expiresAtByJobId[jobId] ?? ""} onChange={e => setExpiresAtByJobId(prev => ({ ...prev, [jobId]: e.target.value }))} /></label>}
-                      {jobId && <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl disabled:opacity-60" onClick={() => savePublishedJob(jobId, item.id)} disabled={busy}>Zapisz zmiany</button>}
+                      {jobId && (
+                        <label className="flex items-center gap-2 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={isAggregatedByJobId[jobId] ?? Boolean(item.is_aggregated)}
+                            onChange={e => setIsAggregatedByJobId(prev => ({ ...prev, [jobId]: e.target.checked }))}
+                          />
+                          Oferta agregowana
+                        </label>
+                      )}
+                      {jobId && (
+                        <label className="flex items-center gap-2 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={hideExpirationDateByJobId[jobId] ?? Boolean(item.hide_expiration_date)}
+                            onChange={e => setHideExpirationDateByJobId(prev => ({ ...prev, [jobId]: e.target.checked }))}
+                          />
+                          Brak okreslonej daty na ofercie
+                        </label>
+                      )}
+                      {jobId && (
+                        <label className="block text-sm text-slate-700">
+                          Link do OLX / zrodla
+                          <input
+                            className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2"
+                            placeholder="https://www.olx.pl/..."
+                            value={externalApplyUrlByJobId[jobId] ?? item.external_apply_url ?? ""}
+                            onChange={e => setExternalApplyUrlByJobId(prev => ({ ...prev, [jobId]: e.target.value }))}
+                          />
+                        </label>
+                      )}
+                      {jobId && <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl disabled:opacity-60" onClick={() => savePublishedJob(jobId, item.id, item)} disabled={busy}>Zapisz zmiany</button>}
                       {jobId && <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl disabled:opacity-60" onClick={() => extendPublishedJob(jobId, item.id, 30)} disabled={busy}>Przedluz +30 dni</button>}
                       {jobId && (isClosed(item) ? <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl disabled:opacity-60" onClick={() => restoreJob(jobId, item.id)} disabled={busy}>Przywroc oferte</button> : <button className="w-full bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl disabled:opacity-60" onClick={() => closeJob(jobId, item.id)} disabled={busy}>Zamknij oferte</button>)}
                       <button className="w-full bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl disabled:opacity-60" onClick={() => deleteSubmission(item.id)} disabled={busy}>Usun rekord</button>

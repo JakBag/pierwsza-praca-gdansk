@@ -27,6 +27,24 @@ function normalizeContact(raw: string) {
   return s.replace(/[\s\-().]/g, "");
 }
 
+function isMissingColumnError(message: string | null | undefined) {
+  const text = String(message ?? "").toLowerCase();
+  return text.includes("does not exist") && (
+    text.includes("is_aggregated") ||
+    text.includes("external_apply_url") ||
+    text.includes("hide_expiration_date")
+  );
+}
+
+type JobRecord = {
+  id: string;
+  title: string | null;
+  company: string | null;
+  contact: string | null;
+  is_aggregated?: boolean | null;
+  external_apply_url?: string | null;
+};
+
 export async function POST(req: Request) {
   try {
     const originGuard = requireAllowedBrowserOrigin(req, { requireHeader: true });
@@ -71,14 +89,38 @@ export async function POST(req: Request) {
     const contactNorm = normalizeContact(contact);
     const contactHash = sha256(contactNorm);
 
-    const { data: job, error: jobErr } = await supabaseServer
+    let job: JobRecord | null = null;
+    let jobErr: { message: string } | null = null;
+
+    const firstAttempt = await supabaseServer
       .from("jobs")
-      .select("id,title,company,contact")
+      .select("id,title,company,contact,is_aggregated,external_apply_url")
       .eq("id", jobId)
       .single();
 
+    if (firstAttempt.error && isMissingColumnError(firstAttempt.error.message)) {
+      const fallbackAttempt = await supabaseServer
+        .from("jobs")
+        .select("id,title,company,contact")
+        .eq("id", jobId)
+        .single();
+
+      job = (fallbackAttempt.data ?? null) as JobRecord | null;
+      jobErr = fallbackAttempt.error ? { message: fallbackAttempt.error.message } : null;
+    } else {
+      job = (firstAttempt.data ?? null) as JobRecord | null;
+      jobErr = firstAttempt.error ? { message: firstAttempt.error.message } : null;
+    }
+
     if (jobErr || !job) {
       return NextResponse.json({ error: "Nie znaleziono oferty" }, { status: 404 });
+    }
+
+    if (Boolean(job.is_aggregated)) {
+      return NextResponse.json(
+        { error: "Ta oferta prowadzi do zewnętrznego źródła aplikacji." },
+        { status: 400 }
+      );
     }
 
     const companyEmailRaw = String(job.contact ?? "").trim();

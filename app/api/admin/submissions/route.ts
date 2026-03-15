@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { requireAdminRequest } from "@/lib/security";
 
+function isMissingColumnError(message: string | null | undefined) {
+  const text = String(message ?? "").toLowerCase();
+  return text.includes("does not exist") && (
+    text.includes("is_aggregated") ||
+    text.includes("external_apply_url") ||
+    text.includes("hide_expiration_date")
+  );
+}
+
 function normalizeStatus(status: unknown, publishedJobId: unknown) {
   const raw = String(status ?? "").trim();
   if (raw === "pending" || raw === "approved_unpaid" || raw === "published" || raw === "rejected" || raw === "rejected_unpaid") {
@@ -105,19 +114,57 @@ export async function GET(req: Request) {
     )
   );
 
-  const { data: jobs, error: jobsErr } = jobIds.length
-    ? await supabaseServer.from("jobs").select("id,status,expires_at").in("id", jobIds)
-    : { data: [], error: null };
+  let jobs: Array<{
+    id: string;
+    status: string | null;
+    expires_at: string | null;
+    is_aggregated?: boolean | null;
+    hide_expiration_date?: boolean | null;
+    external_apply_url?: string | null;
+  }> = [];
+  let jobsErr: { message: string } | null = null;
+
+  if (jobIds.length) {
+    const firstAttempt = await supabaseServer
+      .from("jobs")
+      .select("id,status,expires_at,is_aggregated,hide_expiration_date,external_apply_url")
+      .in("id", jobIds);
+
+    if (firstAttempt.error && isMissingColumnError(firstAttempt.error.message)) {
+      const fallbackAttempt = await supabaseServer
+        .from("jobs")
+        .select("id,status,expires_at")
+        .in("id", jobIds);
+
+      jobs = (fallbackAttempt.data ?? []) as typeof jobs;
+      jobsErr = fallbackAttempt.error ? { message: fallbackAttempt.error.message } : null;
+    } else {
+      jobs = (firstAttempt.data ?? []) as typeof jobs;
+      jobsErr = firstAttempt.error ? { message: firstAttempt.error.message } : null;
+    }
+  }
 
   if (jobsErr) {
     return NextResponse.json({ error: jobsErr.message }, { status: 500 });
   }
 
-  const jobMap = new Map<string, { status: string; expires_at: string | null }>();
+  const jobMap = new Map<
+    string,
+    {
+      status: string;
+      expires_at: string | null;
+      is_aggregated: boolean;
+      hide_expiration_date: boolean;
+      external_apply_url: string | null;
+    }
+  >();
   (jobs ?? []).forEach(j =>
     jobMap.set(String(j.id), {
       status: String(j.status ?? ""),
       expires_at: j.expires_at ? String(j.expires_at) : null,
+      is_aggregated: Boolean(j.is_aggregated),
+      hide_expiration_date: Boolean(j.hide_expiration_date),
+      external_apply_url: String(j.external_apply_url ?? "").trim() || null,
     })
   );
 
@@ -181,6 +228,15 @@ export async function GET(req: Request) {
     payment_status: s.payment_status ?? "unpaid",
     published_job_status: s.published_job_id ? jobMap.get(String(s.published_job_id))?.status ?? null : null,
     published_job_expires_at: s.published_job_id ? jobMap.get(String(s.published_job_id))?.expires_at ?? null : null,
+    is_aggregated: s.published_job_id
+      ? jobMap.get(String(s.published_job_id))?.is_aggregated ?? Boolean(s.is_aggregated)
+      : Boolean(s.is_aggregated),
+    hide_expiration_date: s.published_job_id
+      ? jobMap.get(String(s.published_job_id))?.hide_expiration_date ?? Boolean(s.hide_expiration_date)
+      : Boolean(s.hide_expiration_date),
+    external_apply_url: s.published_job_id
+      ? jobMap.get(String(s.published_job_id))?.external_apply_url ?? (String(s.external_apply_url ?? "").trim() || null)
+      : (String(s.external_apply_url ?? "").trim() || null),
     applications_count: s.published_job_id
       ? applicationsByJob.get(String(s.published_job_id))?.total ?? 0
       : 0,

@@ -18,9 +18,20 @@ export async function POST(req: Request) {
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
-  const { submissionId, pricePln } = parsed.data;
+  const { submissionId, pricePln, isAggregated, hideExpirationDate, externalApplyUrl } = parsed.data;
 
-  const update: { status: string; price_pln?: number } = { status: "approved_unpaid" };
+  const update: {
+    status: string;
+    price_pln?: number;
+    is_aggregated: boolean;
+    hide_expiration_date: boolean;
+    external_apply_url: string | null;
+  } = {
+    status: "approved_unpaid",
+    is_aggregated: Boolean(isAggregated),
+    hide_expiration_date: Boolean(hideExpirationDate),
+    external_apply_url: String(externalApplyUrl ?? "").trim() || null,
+  };
   if (typeof pricePln === "number" && Number.isFinite(pricePln) && pricePln > 0) {
     update.price_pln = Math.floor(pricePln);
   }

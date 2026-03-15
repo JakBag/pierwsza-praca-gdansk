@@ -38,7 +38,7 @@ function getExpiresLabel(expiresAt: string | null) {
 
 export default function JobCard({ job, isFavorite = false, onToggleFavorite }: JobCardProps) {
   const tags = job.tags ?? [];
-  const expiresLabel = getExpiresLabel(job.expires_at);
+  const expiresLabel = job.hide_expiration_date ? null : getExpiresLabel(job.expires_at);
   const isNew = (() => {
     const diff = daysDiffFromNow(job.created_at);
     if (diff === null) return false;

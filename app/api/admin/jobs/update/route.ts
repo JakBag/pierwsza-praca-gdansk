@@ -23,15 +23,19 @@ export async function POST(req: Request) {
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
-  const { jobId, pay, description, expiresAt } = parsed.data;
+  const { jobId, pay, description, expiresAt, isAggregated, hideExpirationDate, externalApplyUrl } = parsed.data;
   const normalizedExpiresAt = normalizeExpiresAt(expiresAt);
+  const normalizedExternalApplyUrl = String(externalApplyUrl ?? "").trim() || null;
 
   const { error } = await supabaseServer
     .from("jobs")
     .update({
-      pay,
-      description,
+      pay: pay || null,
+      description: description || null,
       expires_at: normalizedExpiresAt,
+      is_aggregated: Boolean(isAggregated),
+      hide_expiration_date: Boolean(hideExpirationDate),
+      external_apply_url: normalizedExternalApplyUrl,
     })
     .eq("id", jobId);
 
@@ -42,9 +46,12 @@ export async function POST(req: Request) {
   await supabaseServer
     .from("job_submissions")
     .update({
-      pay,
-      description,
+      pay: pay || null,
+      description: description || null,
       expires_at: normalizedExpiresAt,
+      is_aggregated: Boolean(isAggregated),
+      hide_expiration_date: Boolean(hideExpirationDate),
+      external_apply_url: normalizedExternalApplyUrl,
     })
     .eq("published_job_id", jobId);
 

@@ -501,11 +501,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
     });
 
     for (const f of syncedForms) {
-      if (!f.company.trim() || !f.title.trim() || !f.contact.trim() || !f.description.trim()) {
-        setErr("Uzupełnij: firma, stanowisko, kontakt i opis we wszystkich formularzach.");
-        return;
-      }
-      if (!isValidEmail(f.contact)) {
+      if (f.contact.trim() && !isValidEmail(f.contact)) {
         setErr("Kontakt musi być poprawnym emailem (musi zawierać znak @).");
         return;
       }
@@ -604,7 +600,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
         Formularz ({size} {size === 1 ? "ogłoszenie" : "ogłoszenia"})
       </h1>
       <p className="text-slate-600 mt-2">
-        Wypełnij wszystkie pola wymagane. Po weryfikacji wyślemy fakturę/płatność.
+        Żadne pole nie jest obowiązkowe, ale im więcej danych podasz, tym szybciej oferta przejdzie publikację.
       </p>
 
       {err && <div className="mt-6 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4">{err}</div>}

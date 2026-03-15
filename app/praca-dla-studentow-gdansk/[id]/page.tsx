@@ -11,18 +11,18 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pierwszapracatrojmi
 
 function formatTimeCommitment(value: string | null) {
   const raw = String(value ?? "").trim().toLowerCase();
-  if (!raw) return "-";
+  if (!raw) return null;
   if (raw === "pelny etat" || raw === "pełny etat" || raw === "pelny etay") return "Pełny etat";
   if (raw === "czesc etatu" || raw === "część etatu") return "Część etatu";
-  return value ?? "-";
+  return value ?? null;
 }
 
 function formatContractType(value: string | null) {
   const raw = String(value ?? "").trim().toLowerCase();
-  if (!raw) return "-";
+  if (!raw) return null;
   if (raw === "umowa o prace" || raw === "umowa o pracę") return "Umowa o pracę";
   if (raw === "staz / praktyki" || raw === "staż / praktyki") return "Staż / praktyki";
-  return value ?? "-";
+  return value ?? null;
 }
 
 function normalizeText(value: string | null | undefined) {
@@ -84,12 +84,12 @@ export default async function OfferDetailsPage({
     );
   }
 
-  const normalizedPay = job.pay?.trim();
+  const normalizedPay = String(job.pay ?? "").trim();
   const formattedPay = normalizedPay
     ? /zł|zl/i.test(normalizedPay)
       ? normalizedPay.replace(/zl/gi, "zł")
       : `${normalizedPay} zł`
-    : "-";
+    : null;
   const postedMs = Date.parse(String(job.created_at ?? ""));
   const postedLabel = Number.isFinite(postedMs)
     ? `Dodano ${new Date(postedMs).toLocaleDateString("pl-PL")}`
@@ -97,7 +97,7 @@ export default async function OfferDetailsPage({
   const expiresMs = Date.parse(String(job.expires_at ?? ""));
   const expiresLabel = Number.isFinite(expiresMs)
     ? `Wygasa ${new Date(expiresMs).toLocaleDateString("pl-PL")}`
-    : "Bez terminu";
+    : null;
   const cityValue = String(job.city ?? "").trim();
   const districtValue = String(job.district ?? "").trim();
   const locationValue = String(job.location ?? "").trim();
@@ -106,6 +106,13 @@ export default async function OfferDetailsPage({
   const normalizedCity = normalizeText(cityValue);
   const showLocation = Boolean(locationValue && normalizedLocation !== normalizedCity && normalizedLocation !== "gdansk");
   const isGdanskJob = normalizedCity === "gdansk";
+  const hideExpirationDate = Boolean(job.hide_expiration_date);
+  const externalApplyUrl = String(job.external_apply_url ?? "").trim();
+  const isAggregatedJob = Boolean(job.is_aggregated) && Boolean(externalApplyUrl);
+  const contractLabel = formatContractType(job.contract_type);
+  const timeCommitmentLabel = formatTimeCommitment(job.time_commitment);
+  const workModeLabel = String(job.work_mode ?? "").trim() || null;
+
   const allJobs = await getPublishedJobs();
   const relatedJobs = allJobs
     .filter(item => item.id !== job.id)
@@ -124,7 +131,7 @@ export default async function OfferDetailsPage({
     title: job.title,
     description: job.description ?? "",
     datePosted: job.created_at,
-    validThrough: job.expires_at ?? undefined,
+    validThrough: hideExpirationDate ? undefined : (job.expires_at ?? undefined),
     employmentType: job.contract_type ?? undefined,
     hiringOrganization: {
       "@type": "Organization",
@@ -142,7 +149,7 @@ export default async function OfferDetailsPage({
       "@type": "Country",
       name: "PL",
     },
-    directApply: true,
+    directApply: !isAggregatedJob,
     url: `${siteUrl}/praca-dla-studentow-gdansk/${job.id}`,
   };
 
@@ -185,18 +192,22 @@ export default async function OfferDetailsPage({
               </div>
 
               <div className="mt-5 pt-4 border-t border-white/20 flex flex-wrap gap-2">
-                <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">{formattedPay} / h</span>
-                <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">
-                  Umowa: {formatContractType(job.contract_type)}
-                </span>
-                <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">
-                  Wymiar: {formatTimeCommitment(job.time_commitment)}
-                </span>
-                <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">
-                  Tryb: {job.work_mode ?? "-"}
-                </span>
+                {formattedPay ? (
+                  <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">{formattedPay}</span>
+                ) : null}
+                {contractLabel ? (
+                  <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">Umowa: {contractLabel}</span>
+                ) : null}
+                {timeCommitmentLabel ? (
+                  <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">Wymiar: {timeCommitmentLabel}</span>
+                ) : null}
+                {workModeLabel ? (
+                  <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">Tryb: {workModeLabel}</span>
+                ) : null}
                 <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">{postedLabel}</span>
-                <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">{expiresLabel}</span>
+                {!hideExpirationDate && expiresLabel ? (
+                  <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium">{expiresLabel}</span>
+                ) : null}
               </div>
             </div>
 
@@ -209,9 +220,28 @@ export default async function OfferDetailsPage({
           </section>
 
           <aside className="bg-white border border-slate-200 rounded-2xl p-6 h-fit">
-            <h2 className="font-semibold text-slate-900">Zgłoś się</h2>
-            <p className="text-sm text-slate-600 mt-2">Bez CV. Krótka wiadomość i kontakt.</p>
-            <ApplyForm jobId={job.id} />
+            {isAggregatedJob ? (
+              <>
+                <h2 className="font-semibold text-slate-900">Aplikuj w oryginalnym ogłoszeniu</h2>
+                <p className="text-sm text-slate-600 mt-2">
+                  Ta oferta jest agregowana. Przejdź do zewnętrznego źródła, aby wysłać aplikację.
+                </p>
+                <a
+                  href={externalApplyUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
+                >
+                  Przejdź do OLX
+                </a>
+              </>
+            ) : (
+              <>
+                <h2 className="font-semibold text-slate-900">Zgłoś się</h2>
+                <p className="text-sm text-slate-600 mt-2">Bez CV. Krótka wiadomość i kontakt.</p>
+                <ApplyForm jobId={job.id} />
+              </>
+            )}
           </aside>
         </div>
 

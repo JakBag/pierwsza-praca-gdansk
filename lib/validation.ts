@@ -110,14 +110,14 @@ export const submitJobsSchema = z.object({
 });
 
 const submitBatchJobSchema = z.object({
-  company: plainText("company", 120),
-  title: plainText("title", 120),
-  contact: z.string().trim().email("Invalid contact email").max(160),
+  company: optionalPlainText("company", 120),
+  title: optionalPlainText("title", 120),
+  contact: z.string().trim().max(160).optional().default(""),
   district: optionalPlainText("district", 80),
   wants_invoice: z.boolean().optional().default(false),
   invoice_nip: z.string().trim().max(32).optional().default(""),
   promocode: optionalPlainText("promocode", 80),
-  description: plainText("description", 4000),
+  description: optionalPlainText("description", 4000),
   tags: tagsSchema,
   city: optionalPlainText("city", 80),
   location: optionalPlainText("location", 120),
@@ -135,6 +135,14 @@ const submitBatchJobSchema = z.object({
     .optional()
     .default(""),
   expires_at: optionalIsoDate("expires_at"),
+  is_aggregated: z.boolean().optional().default(false),
+  external_apply_url: z
+    .string()
+    .trim()
+    .max(500, "external_apply_url is too long")
+    .refine(value => !value || /^https?:\/\//i.test(value), "external_apply_url must be a valid http(s) url")
+    .optional()
+    .default(""),
 });
 
 export const submitJobsBatchSchema = z
@@ -166,12 +174,30 @@ export const adminSubmissionIdsSchema = z.object({
 export const adminApproveSchema = z.object({
   submissionId: idSchema,
   pricePln: z.number().int().min(1).max(1000000).optional(),
+  isAggregated: z.boolean().optional().default(false),
+  hideExpirationDate: z.boolean().optional().default(false),
+  externalApplyUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine(value => !value || /^https?:\/\//i.test(value), "externalApplyUrl must be a valid http(s) url")
+    .optional()
+    .default(""),
 });
 
 export const adminMarkPaidSchema = z.object({
   submissionId: idSchema,
   invoiceRef: optionalPlainText("invoiceRef", 120),
   durationDays: z.number().int().min(1).max(365).optional().default(30),
+  isAggregated: z.boolean().optional().default(false),
+  hideExpirationDate: z.boolean().optional().default(false),
+  externalApplyUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine(value => !value || /^https?:\/\//i.test(value), "externalApplyUrl must be a valid http(s) url")
+    .optional()
+    .default(""),
 });
 
 export const adminRejectSchema = z.object({
@@ -203,7 +229,16 @@ export const adminJobExtendSchema = z.object({
 
 export const adminJobUpdateSchema = z.object({
   jobId: idSchema,
-  pay: plainText("pay", 80),
-  description: plainText("description", 4000),
+  pay: z.string().trim().max(80).optional().default(""),
+  description: z.string().trim().max(4000).optional().default(""),
   expiresAt: optionalIsoDate("expiresAt"),
+  isAggregated: z.boolean().optional().default(false),
+  hideExpirationDate: z.boolean().optional().default(false),
+  externalApplyUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine(value => !value || /^https?:\/\//i.test(value), "externalApplyUrl must be a valid http(s) url")
+    .optional()
+    .default(""),
 });

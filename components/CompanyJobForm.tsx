@@ -66,7 +66,6 @@ function CompanyJobFormCard({ index, total, value, onChange }: CompanyJobFormCar
             placeholder="np. Bistro Oliwa"
             value={value.company}
             onChange={e => updateField("company", e.target.value)}
-            required
           />
         </div>
 
@@ -80,7 +79,6 @@ function CompanyJobFormCard({ index, total, value, onChange }: CompanyJobFormCar
             placeholder="np. Pomoc kuchenna"
             value={value.title}
             onChange={e => updateField("title", e.target.value)}
-            required
           />
         </div>
 
@@ -95,7 +93,6 @@ function CompanyJobFormCard({ index, total, value, onChange }: CompanyJobFormCar
             placeholder="np. praca@firma.pl"
             value={value.contact}
             onChange={e => updateField("contact", e.target.value)}
-            required
           />
         </div>
 
@@ -109,7 +106,6 @@ function CompanyJobFormCard({ index, total, value, onChange }: CompanyJobFormCar
             placeholder="Krotki opis, godziny i stawka"
             value={value.description}
             onChange={e => updateField("description", e.target.value)}
-            required
           />
         </div>
 

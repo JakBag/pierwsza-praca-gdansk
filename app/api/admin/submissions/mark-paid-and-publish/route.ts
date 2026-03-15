@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
-  const { submissionId, invoiceRef, durationDays } = parsed.data;
+  const { submissionId, invoiceRef, durationDays, isAggregated, hideExpirationDate, externalApplyUrl } = parsed.data;
 
   const { data: sub, error: subErr } = await supabaseServer
     .from("job_submissions")
@@ -46,6 +46,9 @@ export async function POST(req: Request) {
       paid_at: paidAt,
       invoice_ref: invoiceRef || null,
       status: "published",
+      is_aggregated: Boolean(isAggregated),
+      hide_expiration_date: Boolean(hideExpirationDate),
+      external_apply_url: String(externalApplyUrl ?? "").trim() || null,
     })
     .eq("id", submissionId);
 
@@ -58,8 +61,8 @@ export async function POST(req: Request) {
   const { data: jobRow, error: jobErr } = await supabaseServer
     .from("jobs")
     .insert({
-      title: sub.title,
-      company: sub.company,
+      title: String(sub.title ?? "").trim() || "Oferta",
+      company: String(sub.company ?? "").trim() || "Firma",
       city: sub.city ?? "Gdansk",
       tags: sub.tags ?? [],
       location: sub.location ?? "Gdansk",
@@ -69,6 +72,9 @@ export async function POST(req: Request) {
       pay: sub.pay ?? null,
       description: sub.description ?? null,
       contact: sub.contact ?? null,
+      is_aggregated: Boolean(sub.is_aggregated),
+      hide_expiration_date: Boolean(sub.hide_expiration_date),
+      external_apply_url: String(sub.external_apply_url ?? "").trim() || null,
       status: "active",
       expires_at: sub.expires_at ?? expiresAt,
       published: true,

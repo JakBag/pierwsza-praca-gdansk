@@ -26,6 +26,8 @@ type JobPayload = {
   work_mode?: unknown;
   pay?: unknown;
   expires_at?: unknown;
+  is_aggregated?: unknown;
+  external_apply_url?: unknown;
 };
 
 function uuid() {
@@ -114,6 +116,8 @@ export async function POST(req: Request) {
     work_mode: job.work_mode ? String(job.work_mode).trim() : null,
     pay: job.pay ? String(job.pay).trim() : null,
     expires_at: job.expires_at ? String(job.expires_at) : null,
+    is_aggregated: toBool(job.is_aggregated),
+    external_apply_url: job.external_apply_url ? String(job.external_apply_url).trim() : null,
   }));
 
   const { error } = await supabaseServer.from("job_submissions").insert(rows);

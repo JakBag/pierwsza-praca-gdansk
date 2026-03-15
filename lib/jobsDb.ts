@@ -15,6 +15,9 @@ export type DbJob = {
   pay: string | null;
   description: string | null;
   contact: string | null;
+  is_aggregated?: boolean | null;
+  external_apply_url?: string | null;
+  hide_expiration_date?: boolean | null;
   status: string | null;
   expires_at: string | null;
   published: boolean;
