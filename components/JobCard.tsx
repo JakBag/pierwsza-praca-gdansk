@@ -8,11 +8,11 @@ type JobCardProps = {
 };
 
 const VALUE_LABELS_PL: Record<string, string> = {
-  Gdansk: "GdaĹ„sk",
-  "Umowa o prace": "Umowa o pracÄ™",
-  "Staz / praktyki": "StaĹĽ / praktyki",
-  "Pelny etat": "PeĹ‚ny etat",
-  "Czesc etatu": "CzÄ™Ĺ›Ä‡ etatu",
+  Gdansk: "Gda\u0144sk",
+  "Umowa o prace": "Umowa o prac\u0119",
+  "Staz / praktyki": "Sta\u017c / praktyki",
+  "Pelny etat": "Pe\u0142ny etat",
+  "Czesc etatu": "Cz\u0119\u015b\u0107 etatu",
   "Praca sezonowa": "Praca sezonowa",
 };
 
@@ -33,7 +33,7 @@ function getExpiresLabel(expiresAt: string | null) {
   const diff = daysDiffFromNow(expiresAt);
   if (diff === null) return null;
   if (diff <= 0) return "Wygasa dzisiaj";
-  if (diff === 1) return "Wygasa za 1 dzieĹ„";
+  if (diff === 1) return "Wygasa za 1 dzie\u0144";
   return `Wygasa za ${diff} dni`;
 }
 
@@ -79,13 +79,16 @@ export default function JobCard({ job, isFavorite = false, onToggleFavorite }: J
                 ? "border-rose-200 bg-rose-50 text-rose-600"
                 : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
             }`}
-            aria-label={isFavorite ? "UsuĹ„ z zapisanych" : "Zapisz ofertÄ™"}
-            title={isFavorite ? "UsuĹ„ z zapisanych" : "Zapisz ofertÄ™"}
+            aria-label={isFavorite ? "Usu\u0144 z zapisanych" : "Zapisz ofert\u0119"}
+            title={isFavorite ? "Usu\u0144 z zapisanych" : "Zapisz ofert\u0119"}
           >
-            {isFavorite ? "â™Ą" : "â™ˇ"}
+            {isFavorite ? "\u2665" : "\u2661"}
           </button>
 
-          <Link href={`/praca-dla-studentow-gdansk/${job.id}`} className="flex-1 sm:flex-none text-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl min-w-[120px]">
+          <Link
+            href={`/praca-dla-studentow-gdansk/${job.id}`}
+            className="flex-1 sm:flex-none text-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl min-w-[120px]"
+          >
             Zobacz
           </Link>
         </div>
