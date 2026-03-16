@@ -157,6 +157,7 @@ function CompanyJobFormCard({ index, total, value, onChange }: CompanyJobFormCar
               <option value="Czesc etatu">Część etatu</option>
               <option value="Weekendy">Weekendy</option>
               <option value="Elastycznie">Elastycznie</option>
+              <option value="Praca sezonowa">Praca sezonowa</option>
             </select>
           </div>
 
