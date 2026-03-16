@@ -697,6 +697,7 @@ function FormContent({ pkgCode, size }: FormContentProps) {
                 <option value="">Wymiar czasu</option>
                 <option value="Pelny etat">Pełny etat</option>
                 <option value="Czesc etatu">Część etatu</option>
+                <option value="Praca sezonowa">Praca sezonowa</option>
                 <option value="Weekendy">Weekendy</option>
                 <option value="Elastycznie">Elastyczne godziny</option>
               </select>

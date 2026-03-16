@@ -5,6 +5,7 @@ type JobCardProps = {
   job: DbJob;
   isFavorite?: boolean;
   onToggleFavorite?: (jobId: string) => void;
+  "Praca sezonowa": "Praca sezonowa",
 };
 
 const VALUE_LABELS_PL: Record<string, string> = {

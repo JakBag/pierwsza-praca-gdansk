@@ -53,6 +53,7 @@ const FILTER_LABELS_PL: Record<string, string> = {
   "Staz / praktyki": "Staż / praktyki",
   "Pelny etat": "Pełny etat",
   "Czesc etatu": "Część etatu",
+  "Praca sezonowa": "Praca sezonowa",
   Elastycznie: "Elastyczne godziny",
 };
 
@@ -67,6 +68,7 @@ const DEFAULT_CONTRACT_OPTIONS = [
 const DEFAULT_TIME_OPTIONS = [
   "Pelny etat",
   "Czesc etatu",
+  "Praca sezonowa",
   "Weekendy",
   "Elastycznie",
 ];

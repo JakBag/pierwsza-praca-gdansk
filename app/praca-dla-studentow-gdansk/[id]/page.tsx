@@ -14,6 +14,7 @@ function formatTimeCommitment(value: string | null) {
   if (!raw) return null;
   if (raw === "pelny etat" || raw === "pełny etat" || raw === "pelny etay") return "Pełny etat";
   if (raw === "czesc etatu" || raw === "część etatu") return "Część etatu";
+  if (raw === "praca sezonowa") return "Praca sezonowa";
   return value ?? null;
 }
 

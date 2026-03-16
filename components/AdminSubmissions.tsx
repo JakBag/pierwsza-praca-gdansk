@@ -77,6 +77,7 @@ function formatTimeCommitment(value: string | null) {
   const raw = String(value ?? "").trim().toLowerCase();
   if (!raw) return "-";
   if (raw === "pelny etat" || raw === "pelny etay") return "Pełny etat";
+  if (raw === "praca sezonowa") return "Praca sezonowa";
   return value ?? "-";
 }
 
